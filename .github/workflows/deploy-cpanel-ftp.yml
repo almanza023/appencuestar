@@ -30,14 +30,16 @@ jobs:
         run: npm run build -- --configuration production --base-href /
 
       - name: Deploy via FTPS
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ftp.icmencuestasapp.com.co
           username: appftp@app.icmencuestasapp.com.co
           password: ${{ secrets.FTP_APP_PASSWORD }}
           port: 21
           protocol: ftps
+          security: loose
+          timeout: 120000
           local-dir: dist/encuestar/browser/
           server-dir: /public_html/
           dangerous-clean-slate: false
-          log-level: standard
+          log-level: verbose
