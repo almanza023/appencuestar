@@ -6,16 +6,19 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -31,7 +34,7 @@ jobs:
         with:
           server: ftp.icmencuestasapp.com.co
           username: appftp@app.icmencuestasapp.com.co
-          password: @Consultoria2026
+          password: ${{ secrets.FTP_PASSWORD }}
           port: 21
           protocol: ftps
           local-dir: dist/encuestar/browser/
