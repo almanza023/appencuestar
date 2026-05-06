@@ -9,14 +9,15 @@ export interface Hogar {
     centro_poblado_id?: number | null;
     nombre_persona: string;
     cedula: string;
-    direccion: string;
+    manzana?: string | null;
+    predio?: string | null;
     telefono?: string | null;
     estrato?: string | null;
     tipo_vivienda?: string | null;
     edad?: number | null;
     sexo?: string | null;
     ocupacion?: string | null;
-    ingreso?: number | string | null;
+    salario?: string | null;
     created_at?: string;
     updated_at?: string;
     departamento?: { id: number; nombre?: string };

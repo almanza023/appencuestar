@@ -425,7 +425,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     toggleSectionCollapse(sectionTempId: string) {
-        const section = this.secciones.find((s) => s.tempId === sectionTempId);
+        const section = this.secciones.find((s) => s.tempId == sectionTempId);
         if (!section) return;
         section.collapsed = !section.collapsed;
     }
@@ -439,7 +439,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     removeSection(sectionTempId: string) {
-        const target = this.secciones.find((s) => s.tempId === sectionTempId);
+        const target = this.secciones.find((s) => s.tempId == sectionTempId);
         if (!target) return;
 
         if (target.id) this.deletedSectionIds.push(target.id);
@@ -489,7 +489,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
 
     saveQuestionFromModal(question: PreguntaModalModel) {
         if (!this.preguntaModalSectionTempId) return;
-        const section = this.secciones.find((s) => s.tempId === this.preguntaModalSectionTempId);
+        const section = this.secciones.find((s) => s.tempId == this.preguntaModalSectionTempId);
         if (!section) return;
 
         const normalized = {
@@ -498,7 +498,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
         } as BuilderPregunta;
 
         if (this.preguntaModalEditingTempId) {
-            section.preguntas = section.preguntas.map((q) => (q.tempId === this.preguntaModalEditingTempId ? normalized : q));
+            section.preguntas = section.preguntas.map((q) => (q.tempId == this.preguntaModalEditingTempId ? normalized : q));
         } else {
             section.preguntas.push(normalized);
         }
@@ -509,9 +509,9 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     removeQuestion(sectionTempId: string, questionTempId: string) {
-        const section = this.secciones.find((s) => s.tempId === sectionTempId);
+        const section = this.secciones.find((s) => s.tempId == sectionTempId);
         if (!section) return;
-        const target = section.preguntas.find((p) => p.tempId === questionTempId);
+        const target = section.preguntas.find((p) => p.tempId == questionTempId);
         if (!target) return;
 
         if (target.id) this.deletedQuestionIds.push(target.id);
@@ -544,7 +544,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     removeOption(sectionTempId: string, questionTempId: string, optionTempId: string) {
         const question = this.getQuestion(sectionTempId, questionTempId);
         if (!question) return;
-        const target = question.opciones.find((o) => o.tempId === optionTempId);
+        const target = question.opciones.find((o) => o.tempId == optionTempId);
         if (target?.id) this.deletedOptionIds.push(target.id);
         question.opciones = question.opciones.filter((o) => o.tempId !== optionTempId);
         question.opciones.forEach((o, i) => (o.orden = i + 1));
@@ -567,7 +567,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     removeRule(sectionTempId: string, questionTempId: string, ruleTempId: string) {
         const question = this.getQuestion(sectionTempId, questionTempId);
         if (!question) return;
-        const target = question.reglas.find((r) => r.tempId === ruleTempId);
+        const target = question.reglas.find((r) => r.tempId == ruleTempId);
         if (target?.id) this.deletedRuleIds.push(target.id);
         question.reglas = question.reglas.filter((r) => r.tempId !== ruleTempId);
         question.reglas.forEach((r, i) => (r.orden = i + 1));
@@ -578,7 +578,7 @@ export class FormularioBuilder implements OnInit, OnDestroy {
         const result: Array<{ label: string; value: string }> = [];
         for (const sec of this.secciones) {
             for (const pre of sec.preguntas) {
-                if (pre.tempId === origenPreguntaTempId) continue;
+                if (pre.tempId == origenPreguntaTempId) continue;
                 result.push({
                     label: `${sec.titulo || 'Sección'} / ${pre.codigo || pre.etiqueta || 'Pregunta'}`,
                     value: pre.tempId
@@ -589,15 +589,15 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     esTipoConOpciones(tipoPreguntaId: number): boolean {
-        const tipo = this.tiposPregunta.find((t) => t.id === tipoPreguntaId);
-        if (tipo?.requiere_opciones === true) return true;
+        const tipo = this.tiposPregunta.find((t) => t.id == tipoPreguntaId);
+        if (tipo?.requiere_opciones == true) return true;
 
         const texto = `${tipo?.nombre ?? ''} ${tipo?.codigo ?? ''}`.toLowerCase();
         return texto.includes('select') || texto.includes('opcion') || texto.includes('radio') || texto.includes('check');
     }
 
     tipoPreguntaLabel(tipoPreguntaId: number): string {
-        const tipo = this.tiposPregunta.find((t) => t.id === tipoPreguntaId);
+        const tipo = this.tiposPregunta.find((t) => t.id == tipoPreguntaId);
         return tipo?.nombre || `Tipo ${tipoPreguntaId}`;
     }
 
@@ -610,10 +610,10 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     onSectionDrop(targetSectionTempId: string) {
-        if (!this.draggingSectionTempId || this.draggingSectionTempId === targetSectionTempId) return;
+        if (!this.draggingSectionTempId || this.draggingSectionTempId == targetSectionTempId) return;
 
-        const fromIndex = this.secciones.findIndex((s) => s.tempId === this.draggingSectionTempId);
-        const toIndex = this.secciones.findIndex((s) => s.tempId === targetSectionTempId);
+        const fromIndex = this.secciones.findIndex((s) => s.tempId == this.draggingSectionTempId);
+        const toIndex = this.secciones.findIndex((s) => s.tempId == targetSectionTempId);
         if (fromIndex < 0 || toIndex < 0) return;
 
         const [moved] = this.secciones.splice(fromIndex, 1);
@@ -630,15 +630,15 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     onQuestionDrop(targetSectionTempId: string, targetQuestionTempId: string) {
         if (!this.draggingQuestion) return;
 
-        const sourceSection = this.secciones.find((s) => s.tempId === this.draggingQuestion!.sectionTempId);
-        const targetSection = this.secciones.find((s) => s.tempId === targetSectionTempId);
+        const sourceSection = this.secciones.find((s) => s.tempId == this.draggingQuestion!.sectionTempId);
+        const targetSection = this.secciones.find((s) => s.tempId == targetSectionTempId);
         if (!sourceSection || !targetSection) return;
 
-        const sourceIndex = sourceSection.preguntas.findIndex((p) => p.tempId === this.draggingQuestion!.questionTempId);
+        const sourceIndex = sourceSection.preguntas.findIndex((p) => p.tempId == this.draggingQuestion!.questionTempId);
         if (sourceIndex < 0) return;
 
         const [movedQuestion] = sourceSection.preguntas.splice(sourceIndex, 1);
-        const targetIndex = targetSection.preguntas.findIndex((p) => p.tempId === targetQuestionTempId);
+        const targetIndex = targetSection.preguntas.findIndex((p) => p.tempId == targetQuestionTempId);
         targetSection.preguntas.splice(Math.max(targetIndex, 0), 0, movedQuestion);
 
         this.draggingQuestion = undefined;
@@ -649,11 +649,11 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     onQuestionDropToSectionEnd(targetSectionTempId: string) {
         if (!this.draggingQuestion) return;
 
-        const sourceSection = this.secciones.find((s) => s.tempId === this.draggingQuestion!.sectionTempId);
-        const targetSection = this.secciones.find((s) => s.tempId === targetSectionTempId);
+        const sourceSection = this.secciones.find((s) => s.tempId == this.draggingQuestion!.sectionTempId);
+        const targetSection = this.secciones.find((s) => s.tempId == targetSectionTempId);
         if (!sourceSection || !targetSection) return;
 
-        const sourceIndex = sourceSection.preguntas.findIndex((p) => p.tempId === this.draggingQuestion!.questionTempId);
+        const sourceIndex = sourceSection.preguntas.findIndex((p) => p.tempId == this.draggingQuestion!.questionTempId);
         if (sourceIndex < 0) return;
 
         const [movedQuestion] = sourceSection.preguntas.splice(sourceIndex, 1);
@@ -938,9 +938,9 @@ export class FormularioBuilder implements OnInit, OnDestroy {
     }
 
     private getQuestion(sectionTempId: string, questionTempId: string): BuilderPregunta | undefined {
-        const section = this.secciones.find((s) => s.tempId === sectionTempId);
+        const section = this.secciones.find((s) => s.tempId == sectionTempId);
         if (!section) return undefined;
-        return section.preguntas.find((p) => p.tempId === questionTempId);
+        return section.preguntas.find((p) => p.tempId == questionTempId);
     }
 
     private createEmptyQuestion(): BuilderPregunta {

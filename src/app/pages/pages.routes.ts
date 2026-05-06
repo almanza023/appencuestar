@@ -13,7 +13,9 @@ import { MiPerfil } from './mi-perfil/mi-perfil';
 import { Hogares } from './hogares/hogares';
 import { Catalogos } from './catalogos/catalogos';
 import { Encuestas } from './encuestas/encuestas';
+import { EncuestaEditar } from './encuestas/encuesta-editar';
 import { AutorizacionesDatos } from './autorizaciones-datos/autorizaciones-datos';
+import { Observaciones } from './observaciones/observaciones';
 import { roleGuard } from '@/app/core/guards/auth.guard';
 
 export default [
@@ -30,6 +32,8 @@ export default [
     { path: 'usuarios',             component: Usuarios,            canActivate: [roleGuard] },
     { path: 'hogares',              component: Hogares,             canActivate: [roleGuard] },
     { path: 'encuestas',            component: Encuestas },
+    { path: 'encuestas/:id/editar',  component: EncuestaEditar, canActivate: [roleGuard] },
+    { path: 'observaciones',        component: Observaciones,       canActivate: [roleGuard] },
     { path: 'catalogos',            component: Catalogos,           canActivate: [roleGuard] },
     { path: 'autorizaciones-datos', component: AutorizacionesDatos, canActivate: [roleGuard] },
     { path: 'mi-perfil',            component: MiPerfil },

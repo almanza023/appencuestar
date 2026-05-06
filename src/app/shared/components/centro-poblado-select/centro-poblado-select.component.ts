@@ -48,8 +48,13 @@ export class CentroPobladoSelectComponent implements ControlValueAccessor, OnIni
     ngOnInit() {
         this.centroPobladoService.getAll().subscribe({
             next: (data) => {
-                this.allCentros = data.filter((c) => c.estado_id === 1);
+                this.allCentros = data.filter((c) => c.estado_id == 1);
                 this.filterOpciones();
+                if (this.selectedValue !== null) {
+                    const current = this.selectedValue;
+                    this.selectedValue = null;
+                    setTimeout(() => { this.selectedValue = current; });
+                }
             }
         });
     }
@@ -63,7 +68,7 @@ export class CentroPobladoSelectComponent implements ControlValueAccessor, OnIni
     }
 
     private filterOpciones() {
-        const list = this.municipioId ? this.allCentros.filter((c) => c.municipio_id === this.municipioId) : this.allCentros;
+        const list = this.municipioId ? this.allCentros.filter((c) => c.municipio_id == this.municipioId) : this.allCentros;
         this.opciones.set(
             list.map((c) => ({
                 label: c.nombre,

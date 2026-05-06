@@ -44,7 +44,7 @@ import { UsuarioService } from '@/app/pages/service/usuario.service';
                             <label class="block font-medium mb-2">Firma cargada</label>
                             <span
                                 class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold"
-                                [ngClass]="firmaCargadaLabel() === 'Si' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
+                                [ngClass]="firmaCargadaLabel() == 'Si' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'"
                             >
                                 {{ firmaCargadaLabel() }}
                             </span>
@@ -277,7 +277,7 @@ export class MiPerfil {
                 return null;
             }
 
-            return newPassword === confirmation ? null : { passwordMismatch: true };
+            return newPassword == confirmation ? null : { passwordMismatch: true };
         };
     }
 
@@ -289,7 +289,7 @@ export class MiPerfil {
 
         for (const key of keys) {
             const value = user[key];
-            if (typeof value === 'string' && value.trim()) {
+            if (typeof value == 'string' && value.trim()) {
                 return value;
             }
         }
@@ -306,10 +306,10 @@ export class MiPerfil {
         const candidates = ['id', 'usuario_id', 'user_id'];
         for (const key of candidates) {
             const value = user[key];
-            if (typeof value === 'number') {
+            if (typeof value == 'number') {
                 return value;
             }
-            if (typeof value === 'string' && value.trim() && !Number.isNaN(Number(value))) {
+            if (typeof value == 'string' && value.trim() && !Number.isNaN(Number(value))) {
                 return Number(value);
             }
         }
@@ -324,22 +324,22 @@ export class MiPerfil {
         }
 
         const raw = user['firma_cargada'];
-        if (typeof raw === 'string') {
+        if (typeof raw == 'string') {
             const normalized = raw.trim().toUpperCase();
-            if (normalized === 'SI') {
+            if (normalized == 'SI') {
                 return 'Si';
             }
-            if (normalized === 'NO') {
+            if (normalized == 'NO') {
                 return 'No';
             }
         }
 
-        if (typeof raw === 'boolean') {
+        if (typeof raw == 'boolean') {
             return raw ? 'Si' : 'No';
         }
 
-        if (typeof raw === 'number') {
-            return raw === 1 ? 'Si' : 'No';
+        if (typeof raw == 'number') {
+            return raw == 1 ? 'Si' : 'No';
         }
 
         const hasFirma = !!this.getUserString(['firma_url', 'firma', 'firma_imagen', 'firma_image', 'url_firma']);
@@ -389,7 +389,7 @@ export class MiPerfil {
             if (Array.isArray(firstValue) && firstValue.length > 0) {
                 return firstValue[0];
             }
-            if (typeof firstValue === 'string' && firstValue) {
+            if (typeof firstValue == 'string' && firstValue) {
                 return firstValue;
             }
         }

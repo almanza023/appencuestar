@@ -1,8 +1,10 @@
-import { Component, forwardRef, OnInit, signal } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, OnInit, signal, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { DepartamentoService } from '@/app/pages/service/departamento.service';
+
+type Opcion = { label: string; value: number };
 
 @Component({
     selector: 'app-departamento-select',
@@ -18,11 +20,9 @@ import { DepartamentoService } from '@/app/pages/service/departamento.service';
     template: `
         <p-select
             appendTo="body"
-            [(ngModel)]="selectedValue"
-            (ngModelChange)="onValueChange($event)"
+            [(ngModel)]="selectedOption"
             [options]="opciones()"
             optionLabel="label"
-            optionValue="value"
             placeholder="Selecciona un departamento"
             [filter]="true"
             filterPlaceholder="Buscar departamento..."
@@ -32,27 +32,68 @@ import { DepartamentoService } from '@/app/pages/service/departamento.service';
         />
     `
 })
-export class DepartamentoSelectComponent implements ControlValueAccessor, OnInit {
-    opciones = signal<{ label: string; value: number }[]>([]);
-    selectedValue: number | null = null;
+export class DepartamentoSelectComponent implements ControlValueAccessor, OnInit, OnChanges {
+    /**
+     * Departamento que viene desde otro componente/padre
+     * para mostrarse seleccionado automáticamente.
+     */
+    @Input() departamentoIdSeleccionado: number | null = null;
+
+    opciones = signal<Opcion[]>([]);
     isDisabled = false;
 
+    private _selectedId: number | null = null;
     private onChangeFn: (val: number | null) => void = () => {};
     private onTouchedFn: () => void = () => {};
 
     constructor(private departamentoService: DepartamentoService) {}
 
+    get selectedOption(): Opcion | null {
+        return this.opciones().find((o) => o.value == this._selectedId) ?? null;
+    }
+
+    set selectedOption(opt: Opcion | null) {
+        this._selectedId = opt?.value ?? null;
+        this.onChangeFn(this._selectedId);
+        this.onTouchedFn();
+    }
+
     ngOnInit() {
         this.departamentoService.getAll().subscribe({
             next: (data) => {
-                const activos = data.filter((d) => d.estado_id === 1);
-                this.opciones.set(activos.map((d) => ({ label: d.nombre, value: d.id! })));
+                const activos = data.filter((d) => d.estado_id == null || d.estado_id == 1);
+
+                this.opciones.set(
+                    activos.map((d) => ({
+                        label: d.nombre,
+                        value: Number(d.id)
+                    }))
+                );
+
+                if (this.departamentoIdSeleccionado !== null) {
+                    this.setSelectedDepartamento(this.departamentoIdSeleccionado);
+                }
             }
         });
     }
 
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['departamentoIdSeleccionado']) {
+            this.setSelectedDepartamento(this.departamentoIdSeleccionado);
+        }
+    }
+
+    setSelectedDepartamento(departamentoId: number | null): void {
+        if (departamentoId == null || departamentoId == undefined) {
+            this._selectedId = null;
+            return;
+        }
+
+        this._selectedId = Number(departamentoId);
+    }
+
     writeValue(val: number | null): void {
-        this.selectedValue = val ?? null;
+        this._selectedId = val !== null && val !== undefined ? Number(val) : null;
     }
 
     registerOnChange(fn: (val: number | null) => void): void {
@@ -65,10 +106,5 @@ export class DepartamentoSelectComponent implements ControlValueAccessor, OnInit
 
     setDisabledState(isDisabled: boolean): void {
         this.isDisabled = isDisabled;
-    }
-
-    onValueChange(val: number | null) {
-        this.onChangeFn(val);
-        this.onTouchedFn();
     }
 }

@@ -44,7 +44,7 @@ import * as XLSX from 'xlsx';
     template: `
         <p-toast />
 
-        <!-- ===== ESTADÍSTICAS ===== -->
+        <!-- ==== ESTADÍSTICAS ==== -->
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-surface-0 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-5 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between">
@@ -75,7 +75,7 @@ import * as XLSX from 'xlsx';
             </div>
         </div>
 
-        <!-- ===== TOOLBAR ===== -->
+        <!-- ==== TOOLBAR ==== -->
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
                 <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
@@ -96,7 +96,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-toolbar>
 
-        <!-- ===== TABLA ===== -->
+        <!-- ==== TABLA ==== -->
         <p-table
             #dt
             [value]="centros()"
@@ -141,7 +141,7 @@ import * as XLSX from 'xlsx';
                         Municipio <p-sortIcon field="municipio.nombre" />
                     </th>
                     <th pSortableColumn="estado_id" style="min-width: 10rem">
-                        Estado ID <p-sortIcon field="estado_id" />
+                        Estado <p-sortIcon field="estado_id" />
                     </th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -158,7 +158,7 @@ import * as XLSX from 'xlsx';
                         <p-columnFilter type="text" field="municipio.nombre" placeholder="Buscar municipio" ariaLabel="Filter Municipio" />
                     </th>
                     <th>
-                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado ID" />
+                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado" />
                     </th>
                     <th></th>
                 </tr>
@@ -191,8 +191,8 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <!-- ===== DIALOG CREAR / EDITAR ===== -->
-        <p-dialog [(visible)]="centroDialog" [style]="{ width: '460px' }" [header]="dialogTitle" [modal]="true">
+        <!-- ==== DIALOG CREAR / EDITAR ==== -->
+        <p-dialog [(visible)]="centroDialog" [style]="{ width: '460px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
 
@@ -249,7 +249,7 @@ import * as XLSX from 'xlsx';
 
                     <!-- Estado -->
                     <div>
-                        <label for="estado_id" class="block font-semibold mb-2">Estado ID</label>
+                        <label for="estado_id" class="block font-semibold mb-2">Estado</label>
                         <app-estado-select [(ngModel)]="centro.estado_id" />
                     </div>
                 </div>
@@ -280,7 +280,7 @@ export class CentrosPoblados implements OnInit {
     submitted = false;
 
     totalCentros = computed(() => this.centros().length);
-    totalActivos = computed(() => this.centros().filter((c) => c.estado_id === 1).length);
+    totalActivos = computed(() => this.centros().filter((c) => c.estado_id == 1).length);
     totalMunicipios = computed(() => new Set(this.centros().map((c) => c.municipio_id)).size);
 
     @ViewChild('dt') dt!: Table;
@@ -326,13 +326,23 @@ export class CentrosPoblados implements OnInit {
 
     editCentro(cp: CentroPoblado) {
         this.centro = { ...cp };
-        this.selectedDepartamentoId = cp.municipio?.departamento_id ?? null;
+        this.selectedDepartamentoId = null; // Mantener null para que writeValue asigne municipio_id primero
         this.submitted = false;
         this.dialogTitle = 'Editar Centro Poblado';
         this.centroDialog = true;
+        // Asignar el departamento en el siguiente tick, después de que writeValue haya seteado municipio_id
+        setTimeout(() => {
+            this.selectedDepartamentoId = cp.municipio?.departamento_id ?? cp.municipio?.departamento?.id ?? null;
+        });
     }
 
-    onDepartamentoChange(_id: number | null) {
+    onDepartamentoChange(departamentoId: number | null) {
+        const currentDepartamentoId = this.centro.municipio?.departamento_id ?? this.centro.municipio?.departamento?.id ?? null;
+
+        if (currentDepartamentoId == departamentoId) {
+            return;
+        }
+
         this.centro.municipio_id = undefined;
     }
 
@@ -357,7 +367,7 @@ export class CentrosPoblados implements OnInit {
         if (this.centro.id) {
             this.centroPobladoService.update(this.centro.id, payload).subscribe({
                 next: (updated) => {
-                    this.centros.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
+                    this.centros.update((list) => list.map((c) => (c.id == updated.id ? updated : c)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Centro poblado actualizado.', life: 3000 });
                     this.centroDialog = false;
                     this.saving.set(false);
@@ -424,7 +434,7 @@ export class CentrosPoblados implements OnInit {
                         next: () => {
                             completed++;
                             this.centros.update((list) => list.filter((c) => c.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedCentros = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Centros poblados eliminados.', life: 3000 });
                             }
@@ -440,7 +450,7 @@ export class CentrosPoblados implements OnInit {
             ID: c.id,
             Nombre: c.nombre,
             Municipio: c.municipio?.nombre ?? '',
-            'Estado ID': c.estado_id
+            'Estado': c.estado_id
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
@@ -580,8 +590,8 @@ export class CentrosPoblados implements OnInit {
     }
 
     private uploadRows(rows: ParsedTemplateRow[], departamentos: Departamento[], municipios: Municipio[]) {
-        const validDepartamentos = new Set(departamentos.map((d) => d.id).filter((id): id is number => typeof id === 'number'));
-        const municipiosMap = new Map<number, Municipio>(municipios.filter((m) => typeof m.id === 'number').map((m) => [m.id as number, m]));
+        const validDepartamentos = new Set(departamentos.map((d) => d.id).filter((id): id is number => typeof id == 'number'));
+        const municipiosMap = new Map<number, Municipio>(municipios.filter((m) => typeof m.id == 'number').map((m) => [m.id as number, m]));
 
         const invalidRows: string[] = [];
         const validRows = rows.filter((row) => {
@@ -641,8 +651,8 @@ export class CentrosPoblados implements OnInit {
             )
             .subscribe({
                 next: (results) => {
-                    const created = results.filter((r) => r.status === 'ok').map((r) => r.created);
-                    const failed = results.filter((r) => r.status === 'error');
+                    const created = results.filter((r) => r.status == 'ok').map((r) => r.created);
+                    const failed = results.filter((r) => r.status == 'error');
 
                     if (created.length) {
                         this.centros.update((list) => [...list, ...created]);
@@ -735,8 +745,8 @@ export class CentrosPoblados implements OnInit {
     }
 
     private toNumber(value: unknown): number | null {
-        if (typeof value === 'number' && Number.isFinite(value)) return value;
-        if (typeof value === 'string') {
+        if (typeof value == 'number' && Number.isFinite(value)) return value;
+        if (typeof value == 'string') {
             const parsed = Number(value.trim());
             return Number.isFinite(parsed) ? parsed : null;
         }

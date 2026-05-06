@@ -46,6 +46,12 @@ export class EstadoSelectComponent implements ControlValueAccessor, OnInit {
         this.estadoService.getAll().subscribe({
             next: (data) => {
                 this.opciones.set(data.map((estado) => ({ label: estado.nombre, value: estado.id! })));
+                // Re-asignar para que p-select muestre el label cuando el valor ya venía preasignado
+                if (this.selectedValue !== null) {
+                    const current = this.selectedValue;
+                    this.selectedValue = null;
+                    setTimeout(() => { this.selectedValue = current; });
+                }
             }
         });
     }

@@ -6,10 +6,11 @@ const validateSession = (): boolean => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (authService.isAuthenticated()) {
+    if (authService.isAuthenticated() && !authService.isSessionExpired()) {
         return true;
     }
 
+    authService.logout();
     router.navigate(['/auth/login']);
     return false;
 };

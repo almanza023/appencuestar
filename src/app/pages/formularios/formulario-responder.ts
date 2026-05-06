@@ -94,7 +94,7 @@ type QuestionOptionView = { label: string; value: number; rawValue: string; isOt
                         }
                     </div>
 
-                    @if (sectionIndex === 0) {
+                    @if (sectionIndex == 0) {
                         <div class="mb-5 p-4 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/20">
                             <div class="flex items-center justify-between gap-3 mb-3">
                                 <div>
@@ -460,22 +460,22 @@ export class FormularioResponder implements OnInit {
 
     stringAnswer(questionId?: number): string {
         const value = this.getAnswer(questionId);
-        return typeof value === 'string' ? value : '';
+        return typeof value == 'string' ? value : '';
     }
 
     numberAnswer(questionId?: number): number | null {
         const value = this.getAnswer(questionId);
-        return typeof value === 'number' ? value : null;
+        return typeof value == 'number' ? value : null;
     }
 
     multiAnswer(questionId?: number): number[] {
         const value = this.getAnswer(questionId);
-        return Array.isArray(value) ? value.filter((item): item is number => typeof item === 'number') : [];
+        return Array.isArray(value) ? value.filter((item): item is number => typeof item == 'number') : [];
     }
 
     booleanAnswer(questionId?: number): boolean | null {
         const value = this.getAnswer(questionId);
-        return typeof value === 'boolean' ? value : null;
+        return typeof value == 'boolean' ? value : null;
     }
 
     setAnswer(questionId: number | undefined, value: AnswerValue) {
@@ -500,7 +500,7 @@ export class FormularioResponder implements OnInit {
 
     isOtherSelected(pregunta: PreguntaFormulario): boolean {
         const selectedValue = this.getAnswer(pregunta.id);
-        if (selectedValue === null || selectedValue === undefined || selectedValue === '') return false;
+        if (selectedValue == null || selectedValue == undefined || selectedValue == '') return false;
 
         const selectedIds = Array.isArray(selectedValue) ? selectedValue : [selectedValue];
         return selectedIds.some((selectedId) => {
@@ -508,7 +508,7 @@ export class FormularioResponder implements OnInit {
                 return false;
             }
 
-            const selected = (pregunta.opciones ?? []).find((opt) => opt.id === selectedId);
+            const selected = (pregunta.opciones ?? []).find((opt) => opt.id == selectedId);
             return !!selected?.es_otro;
         });
     }
@@ -519,31 +519,31 @@ export class FormularioResponder implements OnInit {
         const value = this.getAnswer(pregunta.id);
 
         if (Array.isArray(value)) {
-            if (value.length === 0) return true;
+            if (value.length == 0) return true;
 
             if (pregunta.permite_otro && this.isOtherSelected(pregunta)) {
-                return this.otherAnswer(pregunta.id).trim().length === 0;
+                return this.otherAnswer(pregunta.id).trim().length == 0;
             }
 
             return false;
         }
 
-        if (typeof value === 'boolean') {
-            return value === null || value === undefined;
+        if (typeof value == 'boolean') {
+            return value == null || value == undefined;
         }
 
-        const baseInvalid = value === null || value === undefined || `${value}`.trim().length === 0;
+        const baseInvalid = value == null || value == undefined || `${value}`.trim().length == 0;
         if (baseInvalid) return true;
 
         if (pregunta.permite_otro && this.isOtherSelected(pregunta)) {
-            return this.otherAnswer(pregunta.id).trim().length === 0;
+            return this.otherAnswer(pregunta.id).trim().length == 0;
         }
 
         return false;
     }
 
     normalizeNumber(value: unknown): number | null {
-        if (value === null || value === undefined || value === '') return null;
+        if (value == null || value == undefined || value == '') return null;
         const numeric = Number(value);
         return Number.isFinite(numeric) ? numeric : null;
     }
@@ -556,14 +556,14 @@ export class FormularioResponder implements OnInit {
     getSelectedOptionIds(pregunta: PreguntaFormulario): number[] {
         const value = this.getAnswer(pregunta.id);
         if (Array.isArray(value)) {
-            return value.filter((item): item is number => typeof item === 'number');
+            return value.filter((item): item is number => typeof item == 'number');
         }
 
-        return typeof value === 'number' ? [value] : [];
+        return typeof value == 'number' ? [value] : [];
     }
 
     getQuestionOptionById(pregunta: PreguntaFormulario, optionId: number): QuestionOptionView | null {
-        return this.questionOptions(pregunta).find((option) => option.value === optionId) ?? null;
+        return this.questionOptions(pregunta).find((option) => option.value == optionId) ?? null;
     }
 
     buildValorTexto(pregunta: PreguntaFormulario): string | null {
@@ -584,15 +584,15 @@ export class FormularioResponder implements OnInit {
             return selectedLabels.length > 0 ? selectedLabels.join(', ') : null;
         }
 
-        if (typeof value === 'boolean') {
+        if (typeof value == 'boolean') {
             return value ? 'SI' : 'NO';
         }
 
-        if (typeof value === 'number') {
+        if (typeof value == 'number') {
             return String(value);
         }
 
-        if (typeof value === 'string') {
+        if (typeof value == 'string') {
             const normalized = value.trim();
             return normalized.length > 0 ? normalized : null;
         }
@@ -609,11 +609,11 @@ export class FormularioResponder implements OnInit {
         const candidates = ['id', 'usuario_id', 'user_id'];
         for (const key of candidates) {
             const rawValue = user[key];
-            if (typeof rawValue === 'number') {
+            if (typeof rawValue == 'number') {
                 return rawValue;
             }
 
-            if (typeof rawValue === 'string' && rawValue.trim() && !Number.isNaN(Number(rawValue))) {
+            if (typeof rawValue == 'string' && rawValue.trim() && !Number.isNaN(Number(rawValue))) {
                 return Number(rawValue);
             }
         }
@@ -622,7 +622,7 @@ export class FormularioResponder implements OnInit {
     }
 
     toUpperText(value: unknown): string {
-        return typeof value === 'string' ? value.toUpperCase() : '';
+        return typeof value == 'string' ? value.toUpperCase() : '';
     }
 
     onDepartamentoChange(_departamentoId: number | null) {
@@ -725,7 +725,7 @@ export class FormularioResponder implements OnInit {
                 );
 
                 const selectedOptionIds = this.getSelectedOptionIds(pregunta);
-                if (!respuesta.id || selectedOptionIds.length === 0) {
+                if (!respuesta.id || selectedOptionIds.length == 0) {
                     continue;
                 }
 

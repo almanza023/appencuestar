@@ -66,11 +66,11 @@ export class UsuarioService {
         const formData = new FormData();
 
         Object.entries(payload).forEach(([key, value]) => {
-            if (value === undefined || value === null) {
+            if (value == undefined || value == null) {
                 return;
             }
 
-            if (typeof value === 'boolean') {
+            if (typeof value == 'boolean') {
                 formData.append(key, value ? '1' : '0');
                 return;
             }

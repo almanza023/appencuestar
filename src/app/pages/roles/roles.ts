@@ -129,7 +129,7 @@ import * as XLSX from 'xlsx';
                         Descripción <p-sortIcon field="descripcion" />
                     </th>
                     <th pSortableColumn="estado_id" style="min-width: 10rem">
-                        Estado ID <p-sortIcon field="estado_id" />
+                        Estado <p-sortIcon field="estado_id" />
                     </th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -143,7 +143,7 @@ import * as XLSX from 'xlsx';
                         <p-columnFilter type="text" field="descripcion" placeholder="Buscar descripción" ariaLabel="Filter Descripción" />
                     </th>
                     <th>
-                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado ID" />
+                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado" />
                     </th>
                     <th></th>
                 </tr>
@@ -175,7 +175,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="rolDialog" [style]="{ width: '520px' }" [header]="dialogTitle" [modal]="true">
+        <p-dialog [(visible)]="rolDialog" [style]="{ width: '520px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
                     <div>
@@ -204,7 +204,7 @@ import * as XLSX from 'xlsx';
                     </div>
 
                     <div>
-                        <label for="estado_id" class="block font-semibold mb-2">Estado ID</label>
+                        <label for="estado_id" class="block font-semibold mb-2">Estado</label>
                         <app-estado-select [(ngModel)]="rol.estado_id" />
                     </div>
                 </div>
@@ -233,7 +233,7 @@ export class Roles implements OnInit {
     submitted = false;
 
     totalRoles = computed(() => this.roles().length);
-    totalActivos = computed(() => this.roles().filter((rol) => rol.estado_id === 1).length);
+    totalActivos = computed(() => this.roles().filter((rol) => rol.estado_id == 1).length);
     totalConDescripcion = computed(() => this.roles().filter((rol) => !!rol.descripcion?.trim()).length);
 
     @ViewChild('dt') dt!: Table;
@@ -300,7 +300,7 @@ export class Roles implements OnInit {
         if (this.rol.id) {
             this.rolService.update(this.rol.id, payload).subscribe({
                 next: (updated) => {
-                    this.roles.update((list) => list.map((item) => (item.id === updated.id ? updated : item)));
+                    this.roles.update((list) => list.map((item) => (item.id == updated.id ? updated : item)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Rol actualizado.', life: 3000 });
                     this.rolDialog = false;
                     this.saving.set(false);
@@ -369,7 +369,7 @@ export class Roles implements OnInit {
                         next: () => {
                             completed++;
                             this.roles.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedRoles = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Roles eliminados.', life: 3000 });
                             }
@@ -388,7 +388,7 @@ export class Roles implements OnInit {
             ID: rol.id,
             Nombre: rol.nombre,
             Descripción: rol.descripcion || '',
-            'Estado ID': rol.estado_id
+            'Estado': rol.estado_id
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);

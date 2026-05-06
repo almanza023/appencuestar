@@ -274,7 +274,7 @@ export class PreguntaModalComponent implements OnChanges {
 
     openEditOptionModal(optionTempId: string) {
         if (!this.localQuestion) return;
-        const option = this.localQuestion.opciones.find((op) => op.tempId === optionTempId);
+        const option = this.localQuestion.opciones.find((op) => op.tempId == optionTempId);
         if (!option) return;
 
         this.optionModalEditingTempId = optionTempId;
@@ -293,7 +293,7 @@ export class PreguntaModalComponent implements OnChanges {
         if (!this.localQuestion) return;
 
         if (this.optionModalEditingTempId) {
-            this.localQuestion.opciones = this.localQuestion.opciones.map((op) => (op.tempId === this.optionModalEditingTempId ? { ...op, ...option } : op));
+            this.localQuestion.opciones = this.localQuestion.opciones.map((op) => (op.tempId == this.optionModalEditingTempId ? { ...op, ...option } : op));
         } else {
             this.localQuestion.opciones.push(option);
         }
@@ -326,8 +326,8 @@ export class PreguntaModalComponent implements OnChanges {
     }
 
     esTipoConOpciones(tipoPreguntaId: number): boolean {
-        const tipo = this.tiposPregunta.find((t) => t.id === tipoPreguntaId);
-        if (tipo?.requiere_opciones === true) return true;
+        const tipo = this.tiposPregunta.find((t) => t.id == tipoPreguntaId);
+        if (tipo?.requiere_opciones == true) return true;
         const texto = `${tipo?.nombre ?? ''} ${tipo?.codigo ?? ''}`.toLowerCase();
         return texto.includes('select') || texto.includes('opcion') || texto.includes('radio') || texto.includes('check');
     }

@@ -10,6 +10,9 @@ export interface Encuesta {
     created_at?: string | null;
     estado_id?: number | null;
     updated_at?: string | null;
+    hogar?: { id?: number; cedula?: string; nombre_persona?: string } | null;
+    encuestador?: { id?: number; nombres?: string; nombre?: string; apellidos?: string; apellido?: string } | null;
+    usuario?: { id?: number; nombres?: string; nombre?: string; apellidos?: string; apellido?: string } | null;
 }
 
 export interface CreateEncuestaPayload {

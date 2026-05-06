@@ -39,7 +39,7 @@ import * as XLSX from 'xlsx';
     template: `
         <p-toast />
 
-        <!-- ===== ESTADÍSTICAS ===== -->
+        <!-- ==== ESTADÍSTICAS ==== -->
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-surface-0 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-5 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between">
@@ -70,7 +70,7 @@ import * as XLSX from 'xlsx';
             </div>
         </div>
 
-        <!-- ===== TOOLBAR ===== -->
+        <!-- ==== TOOLBAR ==== -->
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
                 <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
@@ -88,7 +88,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-toolbar>
 
-        <!-- ===== TABLA ===== -->
+        <!-- ==== TABLA ==== -->
         <p-table
             #dt
             [value]="municipios()"
@@ -130,7 +130,7 @@ import * as XLSX from 'xlsx';
                         Departamento <p-sortIcon field="departamento.nombre" />
                     </th>
                     <th pSortableColumn="estado_id" style="min-width: 10rem">
-                        Estado ID <p-sortIcon field="estado_id" />
+                        Estado <p-sortIcon field="estado_id" />
                     </th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -144,7 +144,7 @@ import * as XLSX from 'xlsx';
                         <p-columnFilter type="text" field="departamento.nombre" placeholder="Buscar departamento" ariaLabel="Filter Departamento" />
                     </th>
                     <th>
-                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado ID" />
+                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado" />
                     </th>
                     <th></th>
                 </tr>
@@ -176,8 +176,8 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <!-- ===== DIALOG CREAR / EDITAR ===== -->
-        <p-dialog [(visible)]="municipioDialog" [style]="{ width: '460px' }" [header]="dialogTitle" [modal]="true">
+        <!-- ==== DIALOG CREAR / EDITAR ==== -->
+        <p-dialog [(visible)]="municipioDialog" [style]="{ width: '460px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
                     <!-- Nombre -->
@@ -214,7 +214,7 @@ import * as XLSX from 'xlsx';
 
                     <!-- Estado -->
                     <div>
-                        <label for="estado_id" class="block font-semibold mb-2">Estado ID</label>
+                        <label for="estado_id" class="block font-semibold mb-2">Estado</label>
                         <app-estado-select [(ngModel)]="municipio.estado_id" />
                     </div>
                 </div>
@@ -243,7 +243,7 @@ export class Municipios implements OnInit {
     submitted = false;
 
     totalMunicipios = computed(() => this.municipios().length);
-    totalActivos = computed(() => this.municipios().filter((m) => m.estado_id === 1).length);
+    totalActivos = computed(() => this.municipios().filter((m) => m.estado_id == 1).length);
     totalDepartamentos = computed(() => new Set(this.municipios().map((m) => m.departamento_id)).size);
 
     @ViewChild('dt') dt!: Table;
@@ -310,7 +310,7 @@ export class Municipios implements OnInit {
         if (this.municipio.id) {
             this.municipioService.update(this.municipio.id, payload).subscribe({
                 next: (updated) => {
-                    this.municipios.update((list) => list.map((m) => (m.id === updated.id ? updated : m)));
+                    this.municipios.update((list) => list.map((m) => (m.id == updated.id ? updated : m)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Municipio actualizado.', life: 3000 });
                     this.municipioDialog = false;
                     this.saving.set(false);
@@ -377,7 +377,7 @@ export class Municipios implements OnInit {
                         next: () => {
                             completed++;
                             this.municipios.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedMunicipios = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Municipios eliminados.', life: 3000 });
                             }
@@ -393,7 +393,7 @@ export class Municipios implements OnInit {
             ID: m.id,
             Nombre: m.nombre,
             Departamento: m.departamento?.nombre ?? '',
-            'Estado ID': m.estado_id
+            'Estado': m.estado_id
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);

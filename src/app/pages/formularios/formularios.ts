@@ -149,7 +149,7 @@ export class Formularios implements OnInit {
     }
 
     totalPorEstado(estado: string): number {
-        return this.formularios().filter((f) => f.estado === estado).length;
+        return this.formularios().filter((f) => f.estado == estado).length;
     }
 
     estadoSeverity(estado: string): 'success' | 'warn' | 'info' | 'secondary' | 'danger' | 'contrast' {

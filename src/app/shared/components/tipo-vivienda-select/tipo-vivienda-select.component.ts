@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { CatalogoService } from '@/app/pages/service/catalogo.service';
 
+type Opcion = { label: string; value: string };
+
 @Component({
     selector: 'app-tipo-vivienda-select',
     standalone: true,
@@ -18,11 +20,9 @@ import { CatalogoService } from '@/app/pages/service/catalogo.service';
     template: `
         <p-select
             appendTo="body"
-            [(ngModel)]="selectedValue"
-            (ngModelChange)="onValueChange($event)"
+            [(ngModel)]="selectedOption"
             [options]="opciones()"
             optionLabel="label"
-            optionValue="value"
             placeholder="Selecciona tipo de vivienda"
             [filter]="true"
             filterPlaceholder="Buscar tipo de vivienda..."
@@ -33,14 +33,24 @@ import { CatalogoService } from '@/app/pages/service/catalogo.service';
     `
 })
 export class TipoViviendaSelectComponent implements ControlValueAccessor, OnInit {
-    opciones = signal<{ label: string; value: string }[]>([]);
-    selectedValue: string | null = null;
+    opciones = signal<Opcion[]>([]);
     isDisabled = false;
 
+    private _selectedValue = signal<string | null>(null);
     private onChangeFn: (val: string | null) => void = () => {};
     private onTouchedFn: () => void = () => {};
 
     constructor(private catalogoService: CatalogoService) {}
+
+    get selectedOption(): Opcion | null {
+        return this.opciones().find((option) => option.value == this._selectedValue()) ?? null;
+    }
+
+    set selectedOption(option: Opcion | null) {
+        this._selectedValue.set(option?.value ?? null);
+        this.onChangeFn(this._selectedValue());
+        this.onTouchedFn();
+    }
 
     ngOnInit() {
         this.reloadOptions();
@@ -51,7 +61,7 @@ export class TipoViviendaSelectComponent implements ControlValueAccessor, OnInit
             next: (catalogo) => {
                 this.opciones.set(
                     (catalogo.detalles ?? []).map((detalle) => ({
-                        label: `${detalle.nombre}`,
+                        label: detalle.nombre,
                         value: detalle.valor
                     }))
                 );
@@ -59,8 +69,12 @@ export class TipoViviendaSelectComponent implements ControlValueAccessor, OnInit
         });
     }
 
+    setSelectedValue(value: string | null): void {
+        this._selectedValue.set(value ?? null);
+    }
+
     writeValue(val: string | null): void {
-        this.selectedValue = val ?? null;
+        this._selectedValue.set(val ?? null);
     }
 
     registerOnChange(fn: (val: string | null) => void): void {
@@ -73,10 +87,5 @@ export class TipoViviendaSelectComponent implements ControlValueAccessor, OnInit
 
     setDisabledState(isDisabled: boolean): void {
         this.isDisabled = isDisabled;
-    }
-
-    onValueChange(val: string | null) {
-        this.onChangeFn(val);
-        this.onTouchedFn();
     }
 }

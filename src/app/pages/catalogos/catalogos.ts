@@ -187,7 +187,7 @@ interface CatalogoDetalleDraft extends Partial<CatalogoDetalle> {
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="catalogoDialog" [style]="{ width: '980px' }" [header]="dialogTitle" [modal]="true" [closable]="!saving()" (onHide)="hideDialog()">
+        <p-dialog [(visible)]="catalogoDialog" [style]="{ width: '980px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false" [closable]="!saving()" (onHide)="hideDialog()">
             <ng-template #content>
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
                     <div class="flex flex-col gap-5">
@@ -236,7 +236,7 @@ interface CatalogoDetalleDraft extends Partial<CatalogoDetalle> {
                         </div>
 
                         <div class="flex flex-wrap gap-2 mb-5">
-                            <p-button [label]="editingDetalleIndex === null ? 'Agregar detalle' : 'Actualizar detalle'" icon="pi pi-plus" (onClick)="upsertDetalle()" />
+                            <p-button [label]="editingDetalleIndex == null ? 'Agregar detalle' : 'Actualizar detalle'" icon="pi pi-plus" (onClick)="upsertDetalle()" />
                             @if (editingDetalleIndex !== null) {
                                 <p-button label="Cancelar edición" icon="pi pi-times" severity="secondary" outlined (onClick)="resetDetalleDraft()" />
                             }
@@ -417,7 +417,7 @@ export class Catalogos implements OnInit {
         };
 
         if (this.editingDetalleIndex !== null) {
-            this.detalleDrafts = this.detalleDrafts.map((item, index) => (index === this.editingDetalleIndex ? payload : item));
+            this.detalleDrafts = this.detalleDrafts.map((item, index) => (index == this.editingDetalleIndex ? payload : item));
         } else {
             this.detalleDrafts = [...this.detalleDrafts, payload];
         }
@@ -455,7 +455,7 @@ export class Catalogos implements OnInit {
 
         this.detalleDrafts = this.detalleDrafts.filter((_, rowIndex) => rowIndex !== index);
 
-        if (this.editingDetalleIndex === index) {
+        if (this.editingDetalleIndex == index) {
             this.resetDetalleDraft();
         } else if (this.editingDetalleIndex !== null && this.editingDetalleIndex > index) {
             this.editingDetalleIndex--;
@@ -604,12 +604,12 @@ export class Catalogos implements OnInit {
 
     private upsertCatalogoInList(catalogo: Catalogo) {
         this.catalogos.update((list) => {
-            const index = list.findIndex((item) => item.id === catalogo.id);
-            if (index === -1) {
+            const index = list.findIndex((item) => item.id == catalogo.id);
+            if (index == -1) {
                 return [catalogo, ...list];
             }
 
-            return list.map((item) => (item.id === catalogo.id ? catalogo : item));
+            return list.map((item) => (item.id == catalogo.id ? catalogo : item));
         });
     }
 
@@ -618,7 +618,7 @@ export class Catalogos implements OnInit {
             await firstValueFrom(this.catalogoService.delete(catalogoId));
             this.catalogos.update((list) => list.filter((item) => item.id !== catalogoId));
 
-            if (this.catalogo.id === catalogoId) {
+            if (this.catalogo.id == catalogoId) {
                 this.resetEditor();
             }
 
@@ -664,7 +664,7 @@ export class Catalogos implements OnInit {
 
     private extractErrorMessage(err: any, fallback: string): string {
         const validationErrors = err?.error?.errors;
-        if (validationErrors && typeof validationErrors === 'object') {
+        if (validationErrors && typeof validationErrors == 'object') {
             const messages = Object.values(validationErrors).flatMap((value) => (Array.isArray(value) ? value : [String(value)]));
             if (messages.length) {
                 return messages.join(' ');

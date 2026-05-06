@@ -51,11 +51,11 @@ declare type SurfacesType = {
                             [title]="primaryColor.name"
                             (click)="updateColors($event, 'primary', primaryColor)"
                             [ngClass]="{
-                                    'outline outline-primary': primaryColor.name === selectedPrimaryColor()
+                                    'outline outline-primary': primaryColor.name == selectedPrimaryColor()
                                 }"
                             class="cursor-pointer w-5 h-5 rounded-full flex shrink-0 items-center justify-center outline-offset-1 shadow"
                             [style]="{
-                                    'background-color': primaryColor?.name === 'noir' ? 'var(--text-color)' : primaryColor?.palette?.['500']
+                                    'background-color': primaryColor?.name == 'noir' ? 'var(--text-color)' : primaryColor?.palette?.['500']
                                 }"
                         >
                         </button>
@@ -72,7 +72,7 @@ declare type SurfacesType = {
                             (click)="updateColors($event, 'surface', surface)"
                             class="cursor-pointer w-5 h-5 rounded-full flex shrink-0 items-center justify-center p-0 outline-offset-1"
                             [ngClass]="{
-                                    'outline outline-primary': selectedSurfaceColor() ? selectedSurfaceColor() === surface.name : layoutService.layoutConfig().darkTheme ? surface.name === 'zinc' : surface.name === 'slate'
+                                    'outline outline-primary': selectedSurfaceColor() ? selectedSurfaceColor() == surface.name : layoutService.layoutConfig().darkTheme ? surface.name == 'zinc' : surface.name == 'slate'
                                 }"
                             [style]="{
                                     'background-color': surface?.palette?.['500']
@@ -286,10 +286,10 @@ export class AppConfigurator {
     });
 
     getPresetExt() {
-        const color: SurfacesType = this.primaryColors().find((c) => c.name === this.selectedPrimaryColor()) || {};
+        const color: SurfacesType = this.primaryColors().find((c) => c.name == this.selectedPrimaryColor()) || {};
         const preset = this.layoutService.layoutConfig().preset;
 
-        if (color.name === 'noir') {
+        if (color.name == 'noir') {
             return {
                 semantic: {
                     primary: {
@@ -338,7 +338,7 @@ export class AppConfigurator {
                 }
             };
         } else {
-            if (preset === 'Nora') {
+            if (preset == 'Nora') {
                 return {
                     semantic: {
                         primary: color.palette,
@@ -415,9 +415,9 @@ export class AppConfigurator {
     }
 
     updateColors(event: any, type: string, color: any) {
-        if (type === 'primary') {
+        if (type == 'primary') {
             this.layoutService.layoutConfig.update((state) => ({ ...state, primary: color.name }));
-        } else if (type === 'surface') {
+        } else if (type == 'surface') {
             this.layoutService.layoutConfig.update((state) => ({ ...state, surface: color.name }));
         }
         this.applyTheme(type, color);
@@ -426,9 +426,9 @@ export class AppConfigurator {
     }
 
     applyTheme(type: string, color: any) {
-        if (type === 'primary') {
+        if (type == 'primary') {
             updatePreset(this.getPresetExt());
-        } else if (type === 'surface') {
+        } else if (type == 'surface') {
             updateSurfacePalette(color.palette);
         }
     }
@@ -436,7 +436,7 @@ export class AppConfigurator {
     onPresetChange(event: any) {
         this.layoutService.layoutConfig.update((state) => ({ ...state, preset: event }));
         const preset = presets[event as KeyOfType<typeof presets>];
-        const surfacePalette = this.surfaces.find((s) => s.name === this.selectedSurfaceColor())?.palette;
+        const surfacePalette = this.surfaces.find((s) => s.name == this.selectedSurfaceColor())?.palette;
         $t().preset(preset).preset(this.getPresetExt()).surfacePalette(surfacePalette).use({ useDefaultOptions: true });
     }
 

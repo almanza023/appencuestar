@@ -138,7 +138,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="estadoDialog" [style]="{ width: '420px' }" [header]="dialogTitle" [modal]="true">
+        <p-dialog [(visible)]="estadoDialog" [style]="{ width: '420px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
                     <div>
@@ -177,7 +177,7 @@ export class Estados implements OnInit {
     submitted = false;
 
     totalEstados = computed(() => this.estados().length);
-    totalActivos = computed(() => this.estados().filter((estado) => estado.nombre?.trim().toUpperCase() === 'ACTIVO').length);
+    totalActivos = computed(() => this.estados().filter((estado) => estado.nombre?.trim().toUpperCase() == 'ACTIVO').length);
     totalOtros = computed(() => this.estados().filter((estado) => estado.nombre?.trim().toUpperCase() !== 'ACTIVO').length);
 
     @ViewChild('dt') dt!: Table;
@@ -245,7 +245,7 @@ export class Estados implements OnInit {
         if (this.editingEstadoId !== null) {
             this.estadoService.update(this.editingEstadoId, payload).subscribe({
                 next: (updated) => {
-                    this.estados.update((list) => list.map((item) => (item.id === updated.id ? updated : item)));
+                    this.estados.update((list) => list.map((item) => (item.id == updated.id ? updated : item)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Estado actualizado.', life: 3000 });
                     this.estadoDialog = false;
                     this.editingEstadoId = null;
@@ -315,7 +315,7 @@ export class Estados implements OnInit {
                         next: () => {
                             completed++;
                             this.estados.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedEstados = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Estados eliminados.', life: 3000 });
                             }

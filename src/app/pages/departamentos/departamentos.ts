@@ -37,7 +37,7 @@ import * as XLSX from 'xlsx';
     template: `
         <p-toast />
 
-        <!-- ===== ESTADÍSTICAS ===== -->
+        <!-- ==== ESTADÍSTICAS ==== -->
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div class="bg-surface-0 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-5 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between">
@@ -68,7 +68,7 @@ import * as XLSX from 'xlsx';
             </div>
         </div>
 
-        <!-- ===== TOOLBAR ===== -->
+        <!-- ==== TOOLBAR ==== -->
         <p-toolbar styleClass="mb-6">
             <ng-template #start>
                 <p-button label="Nuevo" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
@@ -86,7 +86,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-toolbar>
 
-        <!-- ===== TABLA ===== -->
+        <!-- ==== TABLA ==== -->
         <p-table
             #dt
             [value]="departamentos()"
@@ -125,7 +125,7 @@ import * as XLSX from 'xlsx';
                         Nombre <p-sortIcon field="nombre" />
                     </th>
                     <th pSortableColumn="estado_id" style="min-width: 10rem">
-                        Estado ID <p-sortIcon field="estado_id" />
+                        Estado <p-sortIcon field="estado_id" />
                     </th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -136,7 +136,7 @@ import * as XLSX from 'xlsx';
                         <p-columnFilter type="text" field="nombre" placeholder="Buscar nombre" ariaLabel="Filter Nombre" />
                     </th>
                     <th>
-                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado ID" />
+                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado" />
                     </th>
                     <th></th>
                 </tr>
@@ -167,8 +167,8 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <!-- ===== DIALOG CREAR / EDITAR ===== -->
-        <p-dialog [(visible)]="departamentoDialog" [style]="{ width: '420px' }" [header]="dialogTitle" [modal]="true">
+        <!-- ==== DIALOG CREAR / EDITAR ==== -->
+        <p-dialog [(visible)]="departamentoDialog" [style]="{ width: '420px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
                     <div>
@@ -181,7 +181,7 @@ import * as XLSX from 'xlsx';
                         }
                     </div>
                     <div>
-                        <label for="estado_id" class="block font-semibold mb-2">Estado ID</label>
+                        <label for="estado_id" class="block font-semibold mb-2">Estado</label>
                         <app-estado-select [(ngModel)]="departamento.estado_id" />
                     </div>
                 </div>
@@ -210,7 +210,7 @@ export class Departamentos implements OnInit {
     submitted = false;
 
     totalDepartamentos = computed(() => this.departamentos().length);
-    totalEstado1 = computed(() => this.departamentos().filter((d) => d.estado_id === 1).length);
+    totalEstado1 = computed(() => this.departamentos().filter((d) => d.estado_id == 1).length);
     totalOtroEstado = computed(() => this.departamentos().filter((d) => d.estado_id !== 1).length);
 
     @ViewChild('dt') dt!: Table;
@@ -276,7 +276,7 @@ export class Departamentos implements OnInit {
         if (this.departamento.id) {
             this.departamentoService.update(this.departamento.id, payload).subscribe({
                 next: (updated) => {
-                    this.departamentos.update((list) => list.map((d) => (d.id === updated.id ? updated : d)));
+                    this.departamentos.update((list) => list.map((d) => (d.id == updated.id ? updated : d)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Departamento actualizado.', life: 3000 });
                     this.departamentoDialog = false;
                     this.saving.set(false);
@@ -343,7 +343,7 @@ export class Departamentos implements OnInit {
                         next: () => {
                             completed++;
                             this.departamentos.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedDepartamentos = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Departamentos eliminados.', life: 3000 });
                             }
@@ -358,7 +358,7 @@ export class Departamentos implements OnInit {
         const data = this.departamentos().map((d) => ({
             ID: d.id,
             Nombre: d.nombre,
-            'Estado ID': d.estado_id
+            'Estado': d.estado_id
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);

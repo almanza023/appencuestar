@@ -197,7 +197,7 @@ interface UsuarioProyectoDraft {
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="usuarioDialog" [style]="{ width: '980px' }" [header]="dialogTitle" [modal]="true">
+        <p-dialog [(visible)]="usuarioDialog" [style]="{ width: '980px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2">
                     <div class="flex flex-col gap-5">
@@ -304,7 +304,7 @@ interface UsuarioProyectoDraft {
                         </div>
 
                         <div class="flex gap-2">
-                            <p-button [label]="editingProyectoUsuarioIndex === null ? 'Agregar proyecto' : 'Actualizar proyecto'" icon="pi pi-plus" (click)="upsertProyectoUsuario()" />
+                            <p-button [label]="editingProyectoUsuarioIndex == null ? 'Agregar proyecto' : 'Actualizar proyecto'" icon="pi pi-plus" (click)="upsertProyectoUsuario()" />
                             @if (editingProyectoUsuarioIndex !== null) {
                                 <p-button label="Cancelar edición" icon="pi pi-times" severity="secondary" outlined (click)="cancelProyectoUsuarioEdition()" />
                             }
@@ -374,7 +374,7 @@ export class Usuarios implements OnInit {
     editingProyectoUsuarioIndex: number | null = null;
 
     totalUsuarios = computed(() => this.usuarios().length);
-    totalActivos = computed(() => this.usuarios().filter((usuario) => usuario.estado_id === 1).length);
+    totalActivos = computed(() => this.usuarios().filter((usuario) => usuario.estado_id == 1).length);
     totalUsuariosConProyectos = computed(() => new Set(this.relaciones().map((relacion) => relacion.usuario_id)).size);
     totalRolesAsignados = computed(() => new Set(this.usuarios().map((usuario) => usuario.rol_id)).size);
 
@@ -436,7 +436,7 @@ export class Usuarios implements OnInit {
     editUsuario(usuario: Usuario) {
         this.usuario = { ...usuario, password: '' };
         this.usuarioProyectos = this.relaciones()
-            .filter((relacion) => relacion.usuario_id === usuario.id)
+            .filter((relacion) => relacion.usuario_id == usuario.id)
             .map((relacion) => ({
                 id: relacion.id,
                 proyecto_id: relacion.proyecto_id,
@@ -499,7 +499,7 @@ export class Usuarios implements OnInit {
         }
 
         const duplicateIndex = this.usuarioProyectos.findIndex(
-            (relacion, index) => relacion.proyecto_id === this.proyectoUsuarioDraft.proyecto_id && index !== this.editingProyectoUsuarioIndex
+            (relacion, index) => relacion.proyecto_id == this.proyectoUsuarioDraft.proyecto_id && index !== this.editingProyectoUsuarioIndex
         );
 
         if (duplicateIndex >= 0) {
@@ -536,7 +536,7 @@ export class Usuarios implements OnInit {
 
     removeProyectoUsuarioRow(index: number) {
         this.usuarioProyectos = this.usuarioProyectos.filter((_, relationIndex) => relationIndex !== index);
-        if (this.editingProyectoUsuarioIndex === index) {
+        if (this.editingProyectoUsuarioIndex == index) {
             this.resetProyectoUsuarioDraft();
         }
     }
@@ -651,44 +651,44 @@ export class Usuarios implements OnInit {
 
     getRolNombre(rolId?: number | null): string {
         if (!rolId) return 'Sin rol';
-        return this.roles().find((rol) => rol.id === rolId)?.nombre ?? `Rol #${rolId}`;
+        return this.roles().find((rol) => rol.id == rolId)?.nombre ?? `Rol #${rolId}`;
     }
 
     getEstadoNombre(estadoId?: number | null): string {
         if (!estadoId) return 'Sin estado';
-        return this.estados().find((estado) => estado.id === estadoId)?.nombre ?? `Estado #${estadoId}`;
+        return this.estados().find((estado) => estado.id == estadoId)?.nombre ?? `Estado #${estadoId}`;
     }
 
     getProyectoNombre(proyectoId?: number | null): string {
         if (!proyectoId) return 'Sin proyecto';
-        const proyecto = this.proyectos().find((item) => item.id === proyectoId);
+        const proyecto = this.proyectos().find((item) => item.id == proyectoId);
         if (!proyecto) return `Proyecto #${proyectoId}`;
         return proyecto.codigo ? `${proyecto.codigo} - ${proyecto.nombre}` : proyecto.nombre;
     }
 
     getCantidadProyectosUsuario(usuarioId?: number): number {
         if (!usuarioId) return 0;
-        return this.relaciones().filter((relacion) => relacion.usuario_id === usuarioId).length;
+        return this.relaciones().filter((relacion) => relacion.usuario_id == usuarioId).length;
     }
 
     getFirmaCargadaLabel(usuario: Partial<Usuario>): string {
         const raw = usuario.firma_cargada;
-        if (typeof raw === 'string') {
+        if (typeof raw == 'string') {
             const normalized = raw.trim().toUpperCase();
-            if (normalized === 'SI') {
+            if (normalized == 'SI') {
                 return 'Si';
             }
-            if (normalized === 'NO') {
+            if (normalized == 'NO') {
                 return 'No';
             }
         }
 
-        if (typeof raw === 'boolean') {
+        if (typeof raw == 'boolean') {
             return raw ? 'Si' : 'No';
         }
 
-        if (typeof raw === 'number') {
-            return raw === 1 ? 'Si' : 'No';
+        if (typeof raw == 'number') {
+            return raw == 1 ? 'Si' : 'No';
         }
 
         const hasFirma = !!this.getFirmaFromUsuario(usuario);
@@ -697,22 +697,22 @@ export class Usuarios implements OnInit {
 
     isFirmaCargada(usuario: Partial<Usuario>): boolean {
         const raw = usuario.firma_cargada;
-        if (typeof raw === 'string') {
+        if (typeof raw == 'string') {
             const normalized = raw.trim().toUpperCase();
-            if (normalized === 'SI') {
+            if (normalized == 'SI') {
                 return true;
             }
-            if (normalized === 'NO') {
+            if (normalized == 'NO') {
                 return false;
             }
         }
 
-        if (typeof raw === 'boolean') {
+        if (typeof raw == 'boolean') {
             return raw;
         }
 
-        if (typeof raw === 'number') {
-            return raw === 1;
+        if (typeof raw == 'number') {
+            return raw == 1;
         }
 
         return !!this.getFirmaFromUsuario(usuario);
@@ -724,18 +724,18 @@ export class Usuarios implements OnInit {
     }
 
     private async syncProyectoUsuarios(usuarioId: number) {
-        const originales = this.relaciones().filter((relacion) => relacion.usuario_id === usuarioId);
+        const originales = this.relaciones().filter((relacion) => relacion.usuario_id == usuarioId);
         const actuales = this.usuarioProyectos.map((relacion) => ({
             ...relacion,
             usuario_id: usuarioId,
             estado_id: relacion.estado_id ?? 1
         }));
 
-        const toDelete = originales.filter((original) => !actuales.some((actual) => actual.id === original.id));
+        const toDelete = originales.filter((original) => !actuales.some((actual) => actual.id == original.id));
         const toCreate = actuales.filter((actual) => !actual.id);
         const toUpdate = actuales.filter((actual) => {
             if (!actual.id) return false;
-            const original = originales.find((item) => item.id === actual.id);
+            const original = originales.find((item) => item.id == actual.id);
             return !!original && (original.proyecto_id !== actual.proyecto_id || original.estado_id !== actual.estado_id);
         });
 
@@ -764,7 +764,7 @@ export class Usuarios implements OnInit {
 
     private async performDeleteUsuario(usuarioId: number) {
         try {
-            const relaciones = this.relaciones().filter((relacion) => relacion.usuario_id === usuarioId);
+            const relaciones = this.relaciones().filter((relacion) => relacion.usuario_id == usuarioId);
             await Promise.all(relaciones.map((relacion) => firstValueFrom(this.proyectoUsuarioService.delete(relacion.id!))));
             await firstValueFrom(this.usuarioService.delete(usuarioId));
             await this.loadData();
@@ -790,14 +790,14 @@ export class Usuarios implements OnInit {
     }
 
     private async performDeleteUsuarioSilently(usuarioId: number) {
-        const relaciones = this.relaciones().filter((relacion) => relacion.usuario_id === usuarioId);
+        const relaciones = this.relaciones().filter((relacion) => relacion.usuario_id == usuarioId);
         await Promise.all(relaciones.map((relacion) => firstValueFrom(this.proyectoUsuarioService.delete(relacion.id!))));
         await firstValueFrom(this.usuarioService.delete(usuarioId));
     }
 
     private extractErrorMessage(err: any, fallback: string): string {
         const validationErrors = err?.error?.errors;
-        if (validationErrors && typeof validationErrors === 'object') {
+        if (validationErrors && typeof validationErrors == 'object') {
             const messages = Object.values(validationErrors).flatMap((value) => (Array.isArray(value) ? value : [String(value)]));
             if (messages.length) {
                 return messages.join(' ');
@@ -809,10 +809,10 @@ export class Usuarios implements OnInit {
 
     private getFirmaFromUsuario(usuario: Partial<Usuario>): string {
         const value =
-            (typeof usuario.firma_url === 'string' && usuario.firma_url) ||
-            (typeof usuario.firma === 'string' && usuario.firma) ||
-            (typeof (usuario as any).firma_imagen === 'string' && (usuario as any).firma_imagen) ||
-            (typeof (usuario as any).firma_image === 'string' && (usuario as any).firma_image) ||
+            (typeof usuario.firma_url == 'string' && usuario.firma_url) ||
+            (typeof usuario.firma == 'string' && usuario.firma) ||
+            (typeof (usuario as any).firma_imagen == 'string' && (usuario as any).firma_imagen) ||
+            (typeof (usuario as any).firma_image == 'string' && (usuario as any).firma_image) ||
             '';
 
         return value;

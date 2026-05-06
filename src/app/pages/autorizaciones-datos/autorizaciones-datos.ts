@@ -131,7 +131,7 @@ import * as XLSX from 'xlsx';
                         Habilitado <p-sortIcon field="habilitado" />
                     </th>
                     <th pSortableColumn="estado_id" style="min-width: 10rem">
-                        Estado ID <p-sortIcon field="estado_id" />
+                        Estado <p-sortIcon field="estado_id" />
                     </th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -145,7 +145,7 @@ import * as XLSX from 'xlsx';
                         <p-columnFilter type="boolean" field="habilitado" />
                     </th>
                     <th>
-                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado ID" />
+                        <p-columnFilter type="numeric" field="estado_id" placeholder="Ej. 1" ariaLabel="Filter Estado" />
                     </th>
                     <th></th>
                 </tr>
@@ -199,7 +199,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="autorizacionDialog" [style]="{ width: '620px' }" [header]="dialogTitle" [modal]="true">
+        <p-dialog [(visible)]="autorizacionDialog" [style]="{ width: '620px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false">
             <ng-template #content>
                 <div class="flex flex-col gap-5 pt-2">
                     <div>
@@ -222,7 +222,7 @@ import * as XLSX from 'xlsx';
                     </div>
 
                     <div>
-                        <label for="estado_id" class="block font-semibold mb-2">Estado ID</label>
+                        <label for="estado_id" class="block font-semibold mb-2">Estado</label>
                         <app-estado-select [(ngModel)]="autorizacion.estado_id" />
                     </div>
 
@@ -327,7 +327,7 @@ export class AutorizacionesDatos implements OnInit {
         if (this.autorizacion.id) {
             this.autorizacionDatoService.update(this.autorizacion.id, payload).subscribe({
                 next: (updated) => {
-                    this.autorizaciones.update((list) => list.map((item) => (item.id === updated.id ? updated : item)));
+                    this.autorizaciones.update((list) => list.map((item) => (item.id == updated.id ? updated : item)));
                     this.messageService.add({ severity: 'success', summary: 'Exito', detail: 'Autorizacion de datos actualizada.', life: 3000 });
                     this.autorizacionDialog = false;
                     this.saving.set(false);
@@ -395,7 +395,7 @@ export class AutorizacionesDatos implements OnInit {
                         next: () => {
                             completed++;
                             this.autorizaciones.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedAutorizaciones = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminadas', detail: 'Autorizaciones eliminadas.', life: 3000 });
                             }

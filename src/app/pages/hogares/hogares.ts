@@ -21,7 +21,6 @@ import { TipoViviendaSelectComponent } from '../../shared/components/tipo-vivien
 import * as XLSX from 'xlsx';
 
 @Component({
-    selector: 'app-hogares',
     standalone: true,
     imports: [
         CommonModule,
@@ -75,7 +74,7 @@ import * as XLSX from 'xlsx';
             </div>
             <div class="bg-surface-0 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-5 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <span class="text-surface-500 dark:text-surface-400 text-sm font-medium">Ingreso Promedio</span>
+                    <span class="text-surface-500 dark:text-surface-400 text-sm font-medium">Con Salario</span>
                     <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900">
                         <i class="pi pi-wallet text-purple-600 dark:text-purple-300 text-lg"></i>
                     </span>
@@ -134,7 +133,8 @@ import * as XLSX from 'xlsx';
                     <th pSortableColumn="nombre_persona" style="min-width: 14rem">Nombre Persona <p-sortIcon field="nombre_persona" /></th>
                     <th pSortableColumn="cedula" style="min-width: 10rem">Cédula <p-sortIcon field="cedula" /></th>
                      <th pSortableColumn="telefono" style="min-width: 10rem">Teléfono <p-sortIcon field="telefono" /></th>
-                    <th pSortableColumn="direccion" style="min-width: 14rem">Dirección <p-sortIcon field="direccion" /></th>
+                    <th pSortableColumn="manzana" style="min-width: 14rem">Manzana <p-sortIcon field="manzana" /></th>
+                    <th pSortableColumn="predio" style="min-width: 14rem">Predio <p-sortIcon field="predio" /></th>
                     <th pSortableColumn="departamento.nombre" style="min-width: 12rem">Departamento <p-sortIcon field="departamento.nombre" /></th>
                     <th pSortableColumn="municipio.nombre" style="min-width: 12rem">Municipio <p-sortIcon field="municipio.nombre" /></th>
                     <th pSortableColumn="centro_poblado.nombre" style="min-width: 12rem">Centro Poblado <p-sortIcon field="centro_poblado.nombre" /></th>
@@ -146,11 +146,7 @@ import * as XLSX from 'xlsx';
                     <th></th>
                     <th><p-columnFilter type="text" field="nombre_persona" placeholder="Buscar nombre" /></th>
                     <th><p-columnFilter type="text" field="cedula" placeholder="Buscar cédula" /></th>
-                    <th><p-columnFilter type="text" field="direccion" placeholder="Buscar dirección" /></th>
-                    <th><p-columnFilter type="text" field="departamento.nombre" placeholder="Buscar departamento" /></th>
-                    <th><p-columnFilter type="text" field="municipio.nombre" placeholder="Buscar municipio" /></th>
-                    <th><p-columnFilter type="text" field="centro_poblado.nombre" placeholder="Buscar centro poblado" /></th>
-                    <th><p-columnFilter type="text" field="telefono" placeholder="Buscar teléfono" /></th>
+
                     <th></th>
                 </tr>
             </ng-template>
@@ -162,7 +158,8 @@ import * as XLSX from 'xlsx';
                                         <td class="uppercase">{{ h.nombre_persona || '-' }}</td>
                                         <td class="uppercase">{{ h.cedula }}</td>
                                                                                 <td class="uppercase">{{ h.telefono || '-' }}</td>
-                                        <td class="uppercase">{{ h.direccion }}</td>
+                                        <td class="uppercase">{{ h.manzana }}</td>
+                                         <td class="uppercase">{{ h.predio }}</td>
                     <td class="uppercase">{{ h.departamento?.nombre || ('ID ' + h.departamento_id) }}</td>
                     <td class="uppercase">{{ h.municipio?.nombre || ('ID ' + h.municipio_id) }}</td>
                     <td class="uppercase">{{ h.centro_poblado?.nombre || (h.centro_poblado_id ? ('ID ' + h.centro_poblado_id) : '-') }}</td>
@@ -185,7 +182,7 @@ import * as XLSX from 'xlsx';
             </ng-template>
         </p-table>
 
-        <p-dialog [(visible)]="hogarDialog" [style]="{ width: '820px' }" [header]="dialogTitle" [modal]="true" (onShow)="onDialogShow()">
+        <p-dialog [(visible)]="hogarDialog" [style]="{ width: '820px' }" [header]="dialogTitle" [modal]="true" [blockScroll]="false" (onShow)="onDialogShow()">
             <ng-template #content>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
@@ -198,7 +195,7 @@ import * as XLSX from 'xlsx';
 
                     <div>
                         <label class="block font-semibold mb-2">Municipio <span class="text-red-500">*</span></label>
-                        <app-municipio-select [(ngModel)]="hogar.municipio_id" [departamentoId]="selectedDepartamentoId" (ngModelChange)="onMunicipioChange($event)" />
+                        <app-municipio-select   [(ngModel)]="hogar.municipio_id" [departamentoId]="selectedDepartamentoId" (ngModelChange)="onMunicipioChange($event)" />
                         @if (submitted && !hogar.municipio_id) {
                             <small class="text-red-500">El municipio es requerido.</small>
                         }
@@ -226,11 +223,13 @@ import * as XLSX from 'xlsx';
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-2">Dirección <span class="text-red-500">*</span></label>
-                        <input pInputText [(ngModel)]="hogar.direccion" (ngModelChange)="hogar.direccion = toUpperText($event)" placeholder="Ej. CALLE 10 #20-30" maxlength="255" fluid />
-                        @if (submitted && !hogar.direccion?.trim()) {
-                            <small class="text-red-500">La dirección es requerida.</small>
-                        }
+                        <label class="block font-semibold mb-2">Manzana</label>
+                        <input pInputText [(ngModel)]="hogar.manzana" (ngModelChange)="hogar.manzana = toUpperText($event)" placeholder="Ej. MZ-01" maxlength="100" fluid />
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-2">Predio</label>
+                        <input pInputText [(ngModel)]="hogar.predio" (ngModelChange)="hogar.predio = toUpperText($event)" placeholder="Ej. PR-01" maxlength="100" fluid />
                     </div>
 
                     <div>
@@ -264,8 +263,8 @@ import * as XLSX from 'xlsx';
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-2">Ingreso</label>
-                        <input pInputText [(ngModel)]="hogar.ingreso" type="number" fluid />
+                        <label class="block font-semibold mb-2">Salario</label>
+                        <input pInputText [(ngModel)]="hogar.salario" (ngModelChange)="hogar.salario = toUpperText($event)" maxlength="100" fluid />
                     </div>
                 </div>
             </ng-template>
@@ -301,17 +300,18 @@ export class Hogares implements OnInit {
         return (edades.reduce((acc, n) => acc + n, 0) / edades.length).toFixed(1);
     });
     promedioIngreso = computed(() => {
-        const ingresos = this.hogares().map((h) => Number(h.ingreso)).filter((n) => Number.isFinite(n) && n > 0);
-        if (!ingresos.length) return '$0';
-        const avg = ingresos.reduce((acc, n) => acc + n, 0) / ingresos.length;
-        return `$${Math.round(avg).toLocaleString('es-CO')}`;
+        const count = this.hogares().filter((h) => !!h.salario).length;
+        return count.toString();
     });
 
     @ViewChild('dt') dt!: Table;
+    @ViewChild(DepartamentoSelectComponent) departamentoSelectComponent?: DepartamentoSelectComponent;
+    @ViewChild(MunicipioSelectComponent) municipioSelectComponent?: MunicipioSelectComponent;
     @ViewChild(SexoSelectComponent) sexoSelectComponent?: SexoSelectComponent;
     @ViewChild(TipoViviendaSelectComponent) tipoViviendaSelectComponent?: TipoViviendaSelectComponent;
 
     private refreshCatalogSelectsOnShow = false;
+    private syncLocationSelectsOnShow = false;
 
     constructor(
         private hogarService: HogarService,
@@ -349,6 +349,7 @@ export class Hogares implements OnInit {
         this.dialogTitle = 'Nuevo Hogar';
         this.refreshCatalogSelectsOnShow = false;
         this.hogarDialog = true;
+        this.syncLocationSelectsOnShow = !this.syncLocationSelects();
     }
 
     editHogar(h: Hogar) {
@@ -358,16 +359,31 @@ export class Hogares implements OnInit {
         this.dialogTitle = 'Editar Hogar';
         this.refreshCatalogSelectsOnShow = true;
         this.hogarDialog = true;
+        this.syncLocationSelectsOnShow = !this.syncLocationSelects();
     }
 
     onDialogShow() {
-        if (!this.refreshCatalogSelectsOnShow) {
-            return;
+        if (this.syncLocationSelectsOnShow) {
+            this.syncLocationSelectsOnShow = !this.syncLocationSelects();
         }
 
-        this.sexoSelectComponent?.reloadOptions();
-        this.tipoViviendaSelectComponent?.reloadOptions();
-        this.refreshCatalogSelectsOnShow = false;
+        if (this.refreshCatalogSelectsOnShow) {
+            this.sexoSelectComponent?.setSelectedValue(this.hogar.sexo ?? null);
+            this.sexoSelectComponent?.reloadOptions();
+            this.tipoViviendaSelectComponent?.setSelectedValue(this.hogar.tipo_vivienda ?? null);
+            this.tipoViviendaSelectComponent?.reloadOptions();
+            this.refreshCatalogSelectsOnShow = false;
+        }
+    }
+
+    private syncLocationSelects(): boolean {
+        if (!this.departamentoSelectComponent || !this.municipioSelectComponent) {
+            return false;
+        }
+
+        this.departamentoSelectComponent.setSelectedDepartamento(this.selectedDepartamentoId);
+        this.municipioSelectComponent.setSelectedMunicipio(this.hogar.municipio_id ?? null);
+        return true;
     }
 
     onDepartamentoChange(_departamentoId: number | null) {
@@ -383,6 +399,7 @@ export class Hogares implements OnInit {
         this.hogarDialog = false;
         this.submitted = false;
         this.selectedDepartamentoId = null;
+        this.syncLocationSelectsOnShow = false;
     }
 
     saveHogar() {
@@ -390,7 +407,7 @@ export class Hogares implements OnInit {
 
         this.hogar = this.normalizeHogarTextFields(this.hogar);
 
-        if (!this.selectedDepartamentoId || !this.hogar.municipio_id || !this.hogar.nombre_persona?.trim() || !this.hogar.cedula?.trim() || !this.hogar.direccion?.trim()) {
+        if (!this.selectedDepartamentoId || !this.hogar.municipio_id || !this.hogar.nombre_persona?.trim() || !this.hogar.cedula?.trim()) {
             return;
         }
 
@@ -400,14 +417,15 @@ export class Hogares implements OnInit {
             centro_poblado_id: this.hogar.centro_poblado_id,
             nombre_persona: this.hogar.nombre_persona.trim(),
             cedula: this.hogar.cedula.trim(),
-            direccion: this.hogar.direccion.trim(),
+            manzana: this.hogar.manzana?.trim(),
+            predio: this.hogar.predio?.trim(),
             telefono: this.hogar.telefono?.trim(),
             estrato: this.hogar.estrato?.trim(),
             tipo_vivienda: this.hogar.tipo_vivienda?.trim(),
             edad: this.hogar.edad,
             sexo: this.hogar.sexo?.trim(),
             ocupacion: this.hogar.ocupacion?.trim(),
-            ingreso: this.hogar.ingreso
+            salario: this.hogar.salario?.trim()
         });
 
         this.saving.set(true);
@@ -416,7 +434,7 @@ export class Hogares implements OnInit {
             this.hogarService.update(this.hogar.id, payload).subscribe({
                 next: (updated) => {
                     const normalizedUpdated = this.normalizeHogarTextFields(updated) as Hogar;
-                    this.hogares.update((list) => list.map((h) => (h.id === normalizedUpdated.id ? normalizedUpdated : h)));
+                    this.hogares.update((list) => list.map((h) => (h.id == normalizedUpdated.id ? normalizedUpdated : h)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Hogar actualizado.', life: 3000 });
                     this.hogarDialog = false;
                     this.saving.set(false);
@@ -483,7 +501,7 @@ export class Hogares implements OnInit {
                         next: () => {
                             completed++;
                             this.hogares.update((list) => list.filter((item) => item.id !== id));
-                            if (completed === ids.length) {
+                            if (completed == ids.length) {
                                 this.selectedHogares = null;
                                 this.messageService.add({ severity: 'success', summary: 'Eliminados', detail: 'Hogares eliminados.', life: 3000 });
                             }
@@ -499,7 +517,8 @@ export class Hogares implements OnInit {
             ID: h.id,
             Cedula: h.cedula,
             Nombre: h.nombre_persona ?? '',
-            Direccion: h.direccion,
+            Manzana: h.manzana ?? '',
+            Predio: h.predio ?? '',
             'Departamento ID': h.departamento_id,
             'Municipio ID': h.municipio_id,
             'Centro Poblado ID': h.centro_poblado_id ?? '',
@@ -509,7 +528,7 @@ export class Hogares implements OnInit {
             Edad: h.edad ?? '',
             Sexo: h.sexo ?? '',
             Ocupacion: h.ocupacion ?? '',
-            Ingreso: h.ingreso ?? ''
+            Salario: h.salario ?? ''
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(data);
@@ -545,7 +564,7 @@ export class Hogares implements OnInit {
     }
 
     toUpperText(value: unknown): string {
-        return typeof value === 'string' ? value.toUpperCase() : '';
+        return typeof value == 'string' ? value.toUpperCase() : '';
     }
 
     private normalizeHogarTextFields(hogar: Partial<Hogar>): Partial<Hogar> {
@@ -553,7 +572,8 @@ export class Hogares implements OnInit {
             ...hogar,
             nombre_persona: this.toUpperText(hogar.nombre_persona),
             cedula: this.toUpperText(hogar.cedula),
-            direccion: this.toUpperText(hogar.direccion),
+            manzana: hogar.manzana !== undefined && hogar.manzana !== null ? this.toUpperText(hogar.manzana) : hogar.manzana,
+            predio: hogar.predio !== undefined && hogar.predio !== null ? this.toUpperText(hogar.predio) : hogar.predio,
             telefono: hogar.telefono !== undefined && hogar.telefono !== null ? this.toUpperText(hogar.telefono) : hogar.telefono,
             estrato: hogar.estrato !== undefined && hogar.estrato !== null ? this.toUpperText(hogar.estrato) : hogar.estrato,
             tipo_vivienda: hogar.tipo_vivienda !== undefined && hogar.tipo_vivienda !== null ? this.toUpperText(hogar.tipo_vivienda) : hogar.tipo_vivienda,
@@ -566,7 +586,7 @@ export class Hogares implements OnInit {
         const serverMessage = err?.error?.message;
         const validation = err?.error?.errors;
 
-        if (validation && typeof validation === 'object') {
+        if (validation && typeof validation == 'object') {
             const first = Object.values(validation)[0] as string[] | undefined;
             if (first?.length) return first[0];
         }

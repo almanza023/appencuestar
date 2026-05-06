@@ -48,7 +48,7 @@ export class LayoutService {
 
     getSurface = computed(() => this.layoutConfig().surface);
 
-    isOverlay = computed(() => this.layoutConfig().menuMode === 'overlay');
+    isOverlay = computed(() => this.layoutConfig().menuMode == 'overlay');
 
     transitionComplete = signal<boolean>(false);
 

@@ -62,7 +62,8 @@ export class AppMenu implements OnInit {
                     { label: 'Proyectos', icon: 'pi pi-fw pi-briefcase', routerLink: ['/pages/proyectos'] },
                     { label: 'Formularios', icon: 'pi pi-fw pi-file-edit', routerLink: ['/pages/formularios'] },
                     { label: 'Hogares', icon: 'pi pi-fw pi-home', routerLink: ['/pages/hogares'] },
-                    { label: 'Encuestas', icon: 'pi pi-fw pi-list-check', routerLink: ['/pages/encuestas'] }
+                    { label: 'Encuestas', icon: 'pi pi-fw pi-list-check', routerLink: ['/pages/encuestas'] },
+                    { label: 'Observaciones', icon: 'pi pi-fw pi-comments', routerLink: ['/pages/observaciones'] }
                 ]
             },
             {

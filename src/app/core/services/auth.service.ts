@@ -30,6 +30,8 @@ export interface ChangePasswordPayload {
 export class AuthService {
     private readonly authStorageKey = 'auth';
     private readonly tokenStorageKey = 'token';
+    private readonly sessionStartKey = 'session_start';
+    private readonly sessionDurationMs = 3 * 60 * 60 * 1000; // 3 horas
     private readonly apiUrl = environment.apiUrl;
 
     constructor(private http: HttpClient) {}
@@ -133,6 +135,15 @@ export class AuthService {
     saveSession(response: LoginResponse): void {
         localStorage.setItem(this.authStorageKey, JSON.stringify(response));
         localStorage.setItem(this.tokenStorageKey, response.access_token);
+        localStorage.setItem(this.sessionStartKey, Date.now().toString());
+    }
+
+    isSessionExpired(): boolean {
+        const startRaw = localStorage.getItem(this.sessionStartKey);
+        if (!startRaw) return true;
+        const start = Number(startRaw);
+        if (isNaN(start)) return true;
+        return Date.now() - start > this.sessionDurationMs;
     }
 
     logout(): void {
