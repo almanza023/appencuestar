@@ -16,6 +16,10 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { FotografiaObservacion, FotografiaObservacionService } from '@/app/pages/service/fotografia-observacion.service';
 import { Observacion, ObservacionService } from '@/app/pages/service/observacion.service';
+import { DepartamentoSelectComponent } from '@/app/shared/components/departamento-select/departamento-select.component';
+import { MunicipioSelectComponent } from '@/app/shared/components/municipio-select/municipio-select.component';
+import { CentroPobladoSelectComponent } from '@/app/shared/components/centro-poblado-select/centro-poblado-select.component';
+import { EncuestadorSelectComponent } from '@/app/shared/components/encuestador-select/encuestador-select.component';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -35,7 +39,11 @@ import * as XLSX from 'xlsx';
         InputIconModule,
         IconFieldModule,
         ConfirmDialogModule,
-        TooltipModule
+        TooltipModule,
+        DepartamentoSelectComponent,
+        MunicipioSelectComponent,
+        CentroPobladoSelectComponent,
+        EncuestadorSelectComponent
     ],
     template: `
         <p-toast />
@@ -132,6 +140,9 @@ import * as XLSX from 'xlsx';
                     <th pSortableColumn="id" style="min-width: 6rem">ID <p-sortIcon field="id" /></th>
 
                     <th pSortableColumn="encuestador_id" style="min-width: 10rem">Encuestador <p-sortIcon field="encuestador_id" /></th>
+                    <th pSortableColumn="departamento" style="min-width: 11rem">Departamento <p-sortIcon field="departamento" /></th>
+                    <th pSortableColumn="municipio" style="min-width: 11rem">Municipio <p-sortIcon field="municipio" /></th>
+                    <th pSortableColumn="centro_poblado" style="min-width: 13rem">Centro Poblado <p-sortIcon field="centro_poblado" /></th>
                     <th pSortableColumn="manzana" style="min-width: 9rem">Manzana <p-sortIcon field="manzana" /></th>
                     <th pSortableColumn="predio" style="min-width: 9rem">Predio <p-sortIcon field="predio" /></th>
                     <th pSortableColumn="descripcion" style="min-width: 22rem">Descripción <p-sortIcon field="descripcion" /></th>
@@ -143,6 +154,9 @@ import * as XLSX from 'xlsx';
                     <th><p-columnFilter type="numeric" field="id" placeholder="ID" /></th>
 
                     <th><p-columnFilter type="numeric" field="encuestador_id" placeholder="Encuestador" /></th>
+                    <th><p-columnFilter type="text" field="departamento.nombre" placeholder="Departamento" /></th>
+                    <th><p-columnFilter type="text" field="municipio.nombre" placeholder="Municipio" /></th>
+                    <th><p-columnFilter type="text" field="centro_poblado.nombre" placeholder="Centro Poblado" /></th>
                     <th><p-columnFilter type="text" field="manzana" placeholder="Manzana" /></th>
                     <th><p-columnFilter type="text" field="predio" placeholder="Predio" /></th>
 
@@ -157,6 +171,9 @@ import * as XLSX from 'xlsx';
                     <td>{{ o.id }}</td>
 
                     <td>{{ o.encuestador?.nombres+ ' ' + o.encuestador?.apellidos }}</td>
+                    <td>{{ o.departamento?.nombre || '-' }}</td>
+                    <td>{{ o.municipio?.nombre || '-' }}</td>
+                    <td>{{ o.centro_poblado?.nombre || '-' }}</td>
                     <td class="uppercase">{{ o.manzana || '-' }}</td>
                     <td class="uppercase">{{ o.predio || '-' }}</td>
                     <td>{{ o.descripcion }}</td>
@@ -171,7 +188,7 @@ import * as XLSX from 'xlsx';
 
             <ng-template #emptymessage>
                 <tr>
-                    <td colspan="9" class="text-center py-10 text-surface-400">
+                    <td colspan="12" class="text-center py-10 text-surface-400">
                         <i class="pi pi-inbox text-4xl mb-3 block"></i>
                         No se encontraron observaciones.
                     </td>
@@ -270,16 +287,46 @@ import * as XLSX from 'xlsx';
             <ng-template #content>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div>
-                        <label class="block font-semibold mb-2">Encuesta ID</label>
-                        <input pInputText type="number" [(ngModel)]="observacion.encuesta_id" min="1" fluid />
-                        <small class="text-surface-500">Opcional. Se envía null si está vacío.</small>
+                        <label class="block font-semibold mb-2">Encuestador <span class="text-red-500">*</span></label>
+                        <app-encuestador-select
+                            [(ngModel)]="observacion.encuestador_id"
+                            [encuestadorIdSeleccionado]="observacion.encuestador_id ?? null"
+                        />
+                        @if (submittedObservacion && !observacion.encuestador_id) {
+                            <small class="text-red-500">El encuestador es requerido.</small>
+                        }
                     </div>
 
                     <div>
-                        <label class="block font-semibold mb-2">Encuestador ID <span class="text-red-500">*</span></label>
-                        <input pInputText type="number" [(ngModel)]="observacion.encuestador_id" min="1" fluid />
-                        @if (submittedObservacion && !observacion.encuestador_id) {
-                            <small class="text-red-500">El encuestador es requerido.</small>
+                        <label class="block font-semibold mb-2">Departamento <span class="text-red-500">*</span></label>
+                        <app-departamento-select
+                            [(ngModel)]="observacion.departamento_id"
+                        />
+                        @if (submittedObservacion && !observacion.departamento_id) {
+                            <small class="text-red-500">El departamento es requerido.</small>
+                        }
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-2">Municipio <span class="text-red-500">*</span></label>
+                        <app-municipio-select
+                            [(ngModel)]="observacion.municipio_id"
+                            [departamentoId]="observacion.departamento_id ?? null"
+                        />
+                        @if (submittedObservacion && !observacion.municipio_id) {
+                            <small class="text-red-500">El municipio es requerido.</small>
+                        }
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold mb-2">Centro Poblado <span class="text-red-500">*</span></label>
+                        <app-centro-poblado-select
+                            [(ngModel)]="observacion.centro_poblado_id"
+                            [municipioId]="observacion.municipio_id ?? null"
+                            [centroPobladoId]="observacion.centro_poblado_id ?? null"
+                        />
+                        @if (submittedObservacion && !observacion.centro_poblado_id) {
+                            <small class="text-red-500">El centro poblado es requerido.</small>
                         }
                     </div>
 
@@ -336,10 +383,13 @@ import * as XLSX from 'xlsx';
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block font-semibold mb-2">Ruta <span class="text-red-500">*</span></label>
-                        <input pInputText [(ngModel)]="fotografia.ruta" (ngModelChange)="fotografia.ruta = normalizePath($event)" maxlength="255" placeholder="firmas/sync/observacion_x.png" fluid />
-                        @if (submittedFotografia && !fotografia.ruta?.trim()) {
-                            <small class="text-red-500">La ruta es requerida.</small>
+                        <label class="block font-semibold mb-2">Imagen <span class="text-red-500">*</span></label>
+                        <input type="file" accept="image/*" (change)="onFotografiaFileSelected($event)" class="w-full p-inputtext" />
+                        @if (fotografiaFileName) {
+                            <small class="text-surface-500">Archivo seleccionado: {{ fotografiaFileName }}</small>
+                        }
+                        @if (submittedFotografia && !fotografiaFile && !fotografia.ruta?.trim()) {
+                            <small class="text-red-500">La imagen es requerida.</small>
                         }
                     </div>
                 </div>
@@ -376,6 +426,8 @@ export class Observaciones implements OnInit {
     fotografiaDialogTitle = 'Nueva fotografía';
     editingFotografiaId: number | null = null;
     fotografia: Partial<FotografiaObservacion> = {};
+    fotografiaFile: File | null = null;
+    fotografiaFileName = '';
     submittedFotografia = false;
     fotografiasTablaDialog = false;
     selectedObservacionFotos: Observacion | null = null;
@@ -458,6 +510,8 @@ export class Observaciones implements OnInit {
             observacion_id: this.selectedObservacionFotos.id,
             estado_id: 1
         };
+        this.fotografiaFile = null;
+        this.fotografiaFileName = '';
         this.editingFotografiaId = null;
         this.submittedFotografia = false;
         this.fotografiaDialogTitle = `Nueva fotografía (Obs. #${this.selectedObservacionFotos.id})`;
@@ -489,13 +543,19 @@ export class Observaciones implements OnInit {
     saveObservacion() {
         this.submittedObservacion = true;
 
-        if (!this.observacion.encuestador_id || !this.observacion.estado_id || !this.observacion.descripcion?.trim()) {
+        const departamentoId = this.toNullableNumber(this.observacion.departamento_id);
+        const municipioId = this.toNullableNumber(this.observacion.municipio_id);
+        const centroPobladoId = this.toNullableNumber(this.observacion.centro_poblado_id);
+
+        if (!this.observacion.encuestador_id || !departamentoId || !municipioId || !centroPobladoId || !this.observacion.estado_id || !this.observacion.descripcion?.trim()) {
             return;
         }
 
         const payload: Partial<Observacion> = {
-            encuesta_id: this.toNullableNumber(this.observacion.encuesta_id),
             encuestador_id: Number(this.observacion.encuestador_id),
+            departamento_id: departamentoId,
+            municipio_id: municipioId,
+            centro_poblado_id: centroPobladoId,
             manzana: this.toUpper(this.observacion.manzana),
             predio: this.toUpper(this.observacion.predio),
             descripcion: this.toUpper(this.observacion.descripcion),
@@ -506,12 +566,12 @@ export class Observaciones implements OnInit {
 
         if (this.editingObservacionId !== null) {
             this.observacionService.update(this.editingObservacionId, payload).subscribe({
-                next: (updated) => {
-                    this.observaciones.update((list) => list.map((item) => (item.id == updated.id ? updated : item)));
+                next: () => {
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Observación actualizada.', life: 3000 });
                     this.observacionDialog = false;
                     this.editingObservacionId = null;
                     this.savingObservacion.set(false);
+                    this.loadObservaciones();
                 },
                 error: (err) => {
                     const msg = err?.error?.message || 'No se pudo actualizar la observación.';
@@ -523,11 +583,11 @@ export class Observaciones implements OnInit {
         }
 
         this.observacionService.create(payload).subscribe({
-            next: (created) => {
-                this.observaciones.update((list) => [...list, created]);
+            next: () => {
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Observación creada.', life: 3000 });
                 this.observacionDialog = false;
                 this.savingObservacion.set(false);
+                this.loadObservaciones();
             },
             error: (err) => {
                 const msg = err?.error?.message || 'No se pudo crear la observación.';
@@ -594,6 +654,8 @@ export class Observaciones implements OnInit {
 
     openNewFotografia() {
         this.fotografia = {};
+        this.fotografiaFile = null;
+        this.fotografiaFileName = '';
         this.editingFotografiaId = null;
         this.submittedFotografia = false;
         this.fotografiaDialogTitle = 'Nueva fotografía';
@@ -602,6 +664,8 @@ export class Observaciones implements OnInit {
 
     editFotografia(item: FotografiaObservacion) {
         this.fotografia = { ...item };
+        this.fotografiaFile = null;
+        this.fotografiaFileName = '';
         this.editingFotografiaId = item.id ?? null;
         this.submittedFotografia = false;
         this.fotografiaDialogTitle = 'Editar fotografía';
@@ -610,18 +674,32 @@ export class Observaciones implements OnInit {
 
     hideFotografiaDialog() {
         this.fotografiaDialog = false;
+        this.fotografiaFile = null;
+        this.fotografiaFileName = '';
         this.editingFotografiaId = null;
         this.submittedFotografia = false;
+    }
+
+    onFotografiaFileSelected(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const file = input.files?.[0] ?? null;
+
+        this.fotografiaFile = file;
+        this.fotografiaFileName = file?.name ?? '';
+
+        if (file) {
+            this.fotografia.ruta = this.normalizePath(file.name);
+        }
     }
 
     saveFotografia() {
         this.submittedFotografia = true;
 
-        if (!this.fotografia.observacion_id || !this.fotografia.estado_id || !this.fotografia.ruta?.trim()) {
+        if (!this.fotografia.observacion_id || !this.fotografia.estado_id || (!this.fotografiaFile && !this.fotografia.ruta?.trim())) {
             return;
         }
 
-        const payload: Partial<FotografiaObservacion> = {
+        const payload: Record<string, unknown> = {
             observacion_id: Number(this.fotografia.observacion_id),
             ruta: this.normalizePath(this.fotografia.ruta),
             estado_id: Number(this.fotografia.estado_id)
@@ -630,11 +708,17 @@ export class Observaciones implements OnInit {
         this.savingFotografia.set(true);
 
         if (this.editingFotografiaId !== null) {
-            this.fotografiaService.update(this.editingFotografiaId, payload).subscribe({
+            const request = this.fotografiaFile
+                ? this.fotografiaService.updateWithFormData(this.editingFotografiaId, payload, this.fotografiaFile)
+                : this.fotografiaService.update(this.editingFotografiaId, payload as Partial<FotografiaObservacion>);
+
+            request.subscribe({
                 next: (updated) => {
                     this.fotografias.update((list) => list.map((item) => (item.id == updated.id ? updated : item)));
                     this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Fotografía actualizada.', life: 3000 });
                     this.fotografiaDialog = false;
+                    this.fotografiaFile = null;
+                    this.fotografiaFileName = '';
                     this.editingFotografiaId = null;
                     this.savingFotografia.set(false);
                 },
@@ -647,11 +731,17 @@ export class Observaciones implements OnInit {
             return;
         }
 
-        this.fotografiaService.create(payload).subscribe({
+        const request = this.fotografiaFile
+            ? this.fotografiaService.createWithFormData(payload, this.fotografiaFile)
+            : this.fotografiaService.create(payload as Partial<FotografiaObservacion>);
+
+        request.subscribe({
             next: (created) => {
                 this.fotografias.update((list) => [...list, created]);
                 this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Fotografía creada.', life: 3000 });
                 this.fotografiaDialog = false;
+                this.fotografiaFile = null;
+                this.fotografiaFileName = '';
                 this.savingFotografia.set(false);
             },
             error: (err) => {
@@ -718,34 +808,49 @@ export class Observaciones implements OnInit {
     }
 
     exportExcel() {
+        const observacionesById = new Map<number, Observacion>();
+        this.observaciones().forEach((o) => {
+            if (o.id != null) {
+                observacionesById.set(o.id, o);
+            }
+        });
+
         const observacionesData = this.observaciones().map((o) => ({
-            ID: o.id,
-            EncuestaID: o.encuesta_id,
-            EncuestadorID: o.encuestador_id,
-            Manzana: o.manzana,
-            Predio: o.predio,
-            Descripcion: o.descripcion,
-            EstadoID: o.estado_id
+            Codigo: o.id,
+            Encuestador: `${o.encuestador?.nombres || ''} ${o.encuestador?.apellidos || ''}`.trim() || '-',
+            Departamento: o.departamento?.nombre || '-',
+            Municipio: o.municipio?.nombre || '-',
+            CentroPoblado: o.centro_poblado?.nombre || '-',
+            Manzana: o.manzana || '-',
+            Predio: o.predio || '-',
+            Descripcion: o.descripcion || '-',
+            Estado: o.estado?.nombre || this.getEstadoNombre(o.estado_id)
         }));
 
         const fotografiasData = this.fotografias().map((f) => ({
-            ID: f.id,
-            ObservacionID: f.observacion_id,
-            Ruta: f.ruta,
-            EstadoID: f.estado_id
+            Observacion: observacionesById.get(f.observacion_id)?.descripcion || '-',
+            Ruta: f.ruta || '-',
+            Estado: this.getEstadoNombre(f.estado_id)
         }));
 
         const workbook = XLSX.utils.book_new();
 
         const observacionesSheet = XLSX.utils.json_to_sheet(observacionesData);
-        observacionesSheet['!cols'] = [{ wch: 8 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 10 }];
+        observacionesSheet['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 22 }, { wch: 22 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 16 }];
         XLSX.utils.book_append_sheet(workbook, observacionesSheet, 'Observaciones');
 
         const fotografiasSheet = XLSX.utils.json_to_sheet(fotografiasData);
-        fotografiasSheet['!cols'] = [{ wch: 8 }, { wch: 14 }, { wch: 50 }, { wch: 10 }];
+        fotografiasSheet['!cols'] = [{ wch: 50 }, { wch: 50 }, { wch: 16 }];
         XLSX.utils.book_append_sheet(workbook, fotografiasSheet, 'Fotografias');
 
         XLSX.writeFile(workbook, `Observaciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    }
+
+    getEstadoNombre(estadoId?: number | null): string {
+        if (estadoId == 1) return 'ACTIVO';
+        if (estadoId == 2) return 'INACTIVO';
+        if (estadoId == 3) return 'PENDIENTE';
+        return 'SIN ESTADO';
     }
 
     toUpper(value?: string | null): string {

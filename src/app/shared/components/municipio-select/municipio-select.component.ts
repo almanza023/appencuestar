@@ -82,7 +82,6 @@ export class MunicipioSelectComponent implements ControlValueAccessor, OnInit, O
 
             if (
                 !changes['departamentoId'].firstChange &&
-                this.departamentoId !== null &&
                 this.allMunicipios.length > 0
             ) {
                 this.validarMunicipioConDepartamento();
@@ -121,19 +120,23 @@ export class MunicipioSelectComponent implements ControlValueAccessor, OnInit, O
     }
 
     private validarMunicipioConDepartamento() {
-        if (this._selectedId == null || this.departamentoId == null) return;
+        // Delay para que writeValue (modo edición) se ejecute primero
+        setTimeout(() => {
+            if (this._selectedId == null) return;
 
-        const municipioSeleccionado = this.allMunicipios.find(
-            (m) => Number(m.id) == Number(this._selectedId)
-        );
+            const municipioSeleccionado = this.allMunicipios.find(
+                (m) => Number(m.id) == Number(this._selectedId)
+            );
 
-        if (
-            municipioSeleccionado &&
-            Number(municipioSeleccionado.departamento_id) !== Number(this.departamentoId)
-        ) {
-            this._selectedId = null;
-            this.onChangeFn(null);
-        }
+            const debeLimpiar =
+                this.departamentoId == null ||
+                (municipioSeleccionado && Number(municipioSeleccionado.departamento_id) !== Number(this.departamentoId));
+
+            if (debeLimpiar) {
+                this._selectedId = null;
+                this.onChangeFn(null);
+            }
+        });
     }
 
     writeValue(val: number | null): void {

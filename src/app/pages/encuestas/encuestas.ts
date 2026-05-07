@@ -24,12 +24,15 @@ import { Hogar, HogarService } from '@/app/pages/service/hogar.service';
 import { Municipio, MunicipioService } from '@/app/pages/service/municipio.service';
 import { Respuesta, RespuestaService } from '@/app/pages/service/respuesta.service';
 import { ValorOpcionRespuesta, ValorOpcionRespuestaService } from '@/app/pages/service/valor-opcion-respuesta.service';
+import { Usuario, UsuarioService } from '@/app/pages/service/usuario.service';
+import { Observacion, ObservacionService } from '@/app/pages/service/observacion.service';
 import { AuthService } from '@/app/core/services/auth.service';
 import { DepartamentoSelectComponent } from '@/app/shared/components/departamento-select/departamento-select.component';
 import { MunicipioSelectComponent } from '@/app/shared/components/municipio-select/municipio-select.component';
 import { CentroPobladoSelectComponent } from '@/app/shared/components/centro-poblado-select/centro-poblado-select.component';
 import { SexoSelectComponent } from '@/app/shared/components/sexo-select/sexo-select.component';
 import { TipoViviendaSelectComponent } from '@/app/shared/components/tipo-vivienda-select/tipo-vivienda-select.component';
+import { EncuestadorSelectComponent } from '@/app/shared/components/encuestador-select/encuestador-select.component';
 
 type RespuestaDetalle = {
     respuestaId: number | null;
@@ -47,6 +50,8 @@ type OpcionPreguntaLookup = {
 type ResumenEncuestador = {
     encuestadorId: number;
     nombre: string;
+    encuestasTotal: number;
+    observacionesTotal: number;
     total: number;
 };
 
@@ -81,7 +86,7 @@ type ResumenCentroPoblado = {
 @Component({
     selector: 'app-encuestas',
     standalone: true,
-    imports: [CommonModule, FormsModule, TableModule, ButtonModule, TagModule, SelectModule, DialogModule, ConfirmDialogModule, ToastModule, DatePickerModule, InputTextModule, InputNumberModule, TextareaModule, DepartamentoSelectComponent, MunicipioSelectComponent, CentroPobladoSelectComponent, SexoSelectComponent, TipoViviendaSelectComponent],
+    imports: [CommonModule, FormsModule, TableModule, ButtonModule, TagModule, SelectModule, DialogModule, ConfirmDialogModule, ToastModule, DatePickerModule, InputTextModule, InputNumberModule, TextareaModule, DepartamentoSelectComponent, MunicipioSelectComponent, CentroPobladoSelectComponent, SexoSelectComponent, TipoViviendaSelectComponent, EncuestadorSelectComponent],
     providers: [MessageService, ConfirmationService],
     template: `
         <p-toast />
@@ -110,17 +115,11 @@ type ResumenCentroPoblado = {
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                     <label class="block mb-2 font-semibold">Filtrar por Encuestador</label>
-                    <p-select
-                        [options]="encuestadorFilterOptions()"
-                        optionLabel="label"
-                        optionValue="value"
+                    <app-encuestador-select
                         [ngModel]="filtroEncuestadorId()"
                         (ngModelChange)="filtroEncuestadorId.set($event)"
-                        [showClear]="true"
-                        appendTo="body"
-                        placeholder="Todos los encuestadores"
-                        class="w-full"
-                    ></p-select>
+                        [encuestadorIdSeleccionado]="filtroEncuestadorId()"
+                    ></app-encuestador-select>
                 </div>
                 <div>
                     <label class="block mb-2 font-semibold">Filtrar por Hogar</label>
@@ -137,6 +136,13 @@ type ResumenCentroPoblado = {
                     ></p-select>
                 </div>
                 <div class="flex items-end gap-2 pb-0.5">
+                    <p-button
+                        label="Exportar Tabla"
+                        icon="pi pi-file-excel"
+                        severity="success"
+                        [outlined]="true"
+                        (onClick)="exportarExcelTablaEncuestas()"
+                    ></p-button>
                     <p-button
                         label="Resumen por Encuestador"
                         icon="pi pi-chart-bar"
@@ -238,6 +244,7 @@ type ResumenCentroPoblado = {
                                 (onClick)="descargarPdf(encuesta)"
                             ></p-button>
                             <p-button label="Editar Preguntas" icon="pi pi-pencil" severity="info" [outlined]="true" (onClick)="editarPreguntas(encuesta)"></p-button>
+                            <p-button label="Cambiar Encuestador" icon="pi pi-user-edit" severity="contrast" [outlined]="true" (onClick)="openCambiarEncuestador(encuesta)"></p-button>
                             <p-button label="Eliminar" icon="pi pi-trash" severity="danger" [outlined]="true" (onClick)="confirmDeleteEncuesta(encuesta)"></p-button>
                             <p-button label="Editar Hogar" icon="pi pi-home" severity="warn" [outlined]="true" (onClick)="openEditHogar(encuesta)"></p-button>
                         </div>
@@ -334,12 +341,46 @@ type ResumenCentroPoblado = {
             }
         </p-dialog>
 
+        <!-- Modal: Cambiar Encuestador -->
+        <p-dialog
+            [(visible)]="cambiarEncuestadorDialogVisible"
+            [modal]="true"
+            [style]="{ width: '620px', maxWidth: '96vw' }"
+            header="Cambiar Encuestador"
+        >
+            @if (encuestaCambioEncuestador) {
+                <div class="flex flex-col gap-4">
+                    <div class="rounded-lg border border-surface-200 dark:border-surface-700 p-3">
+                        <div class="text-xs uppercase text-surface-500 mb-1">Encuesta</div>
+                        <div class="text-base font-semibold">Código {{ encuestaCambioEncuestador.id }}</div>
+                    </div>
+
+                    <div class="rounded-lg border border-surface-200 dark:border-surface-700 p-3">
+                        <div class="text-xs uppercase text-surface-500 mb-1">Encuestador actual</div>
+                        <div class="text-base font-semibold uppercase">{{ getEncuestadorLabel(encuestaCambioEncuestador) }}</div>
+                    </div>
+
+                    <div class="flex flex-col gap-1">
+                        <label class="font-semibold text-sm">Nuevo Encuestador *</label>
+                        <app-encuestador-select
+                            [(ngModel)]="nuevoEncuestadorId"
+                            [encuestadorIdSeleccionado]="nuevoEncuestadorId"
+                        ></app-encuestador-select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 mt-5">
+                    <p-button label="Cancelar" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="closeCambiarEncuestador()"></p-button>
+                    <p-button label="Guardar" icon="pi pi-check" severity="success" [loading]="savingCambiarEncuestador" (onClick)="saveCambiarEncuestador()"></p-button>
+                </div>
+            }
+        </p-dialog>
+
         <!-- Modal: Resumen por Encuestador -->
         <p-dialog
             [(visible)]="resumenDialogVisible"
             [modal]="true"
-            [style]="{ width: '640px', maxWidth: '96vw' }"
-            header="Total de Encuestas por Encuestador"
+            [style]="{ width: '820px', maxWidth: '96vw' }"
+            header="Encuestas y Observaciones por Encuestador"
         >
             <div class="flex justify-end mb-3">
                 <p-button
@@ -355,6 +396,8 @@ type ResumenCentroPoblado = {
                 <ng-template #header>
                     <tr>
                         <th pSortableColumn="nombre">Encuestador <p-sortIcon field="nombre" /></th>
+                        <th pSortableColumn="encuestasTotal" style="width: 9rem; text-align: center">Encuestas <p-sortIcon field="encuestasTotal" /></th>
+                        <th pSortableColumn="observacionesTotal" style="width: 10rem; text-align: center">Observaciones <p-sortIcon field="observacionesTotal" /></th>
                         <th pSortableColumn="total" style="width: 8rem; text-align: center">Total <p-sortIcon field="total" /></th>
                         <th style="width: 6rem; text-align: center">%</th>
                     </tr>
@@ -363,10 +406,16 @@ type ResumenCentroPoblado = {
                     <tr>
                         <td class="uppercase font-medium">{{ r.nombre }}</td>
                         <td style="text-align: center">
+                            <span class="inline-flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-200 font-bold px-3 py-0.5 text-sm">{{ r.encuestasTotal }}</span>
+                        </td>
+                        <td style="text-align: center">
+                            <span class="inline-flex items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 font-bold px-3 py-0.5 text-sm">{{ r.observacionesTotal }}</span>
+                        </td>
+                        <td style="text-align: center">
                             <span class="inline-flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-bold px-3 py-0.5 text-sm">{{ r.total }}</span>
                         </td>
                         <td style="text-align: center" class="text-surface-500 text-sm">
-                            {{ encuestas().length ? ((r.total / encuestas().length) * 100 | number: '1.0-1') + '%' : '-' }}
+                            {{ totalActividadesPorEncuestador() ? ((r.total / totalActividadesPorEncuestador()) * 100 | number: '1.0-1') + '%' : '-' }}
                         </td>
                     </tr>
                 </ng-template>
@@ -374,12 +423,14 @@ type ResumenCentroPoblado = {
                     <tr class="font-bold bg-surface-50 dark:bg-surface-800">
                         <td>Total</td>
                         <td style="text-align: center">{{ encuestas().length }}</td>
+                        <td style="text-align: center">{{ observaciones().length }}</td>
+                        <td style="text-align: center">{{ totalActividadesPorEncuestador() }}</td>
                         <td style="text-align: center">100%</td>
                     </tr>
                 </ng-template>
                 <ng-template #emptymessage>
                     <tr>
-                        <td colspan="3" class="text-center py-8 text-surface-400">No hay datos disponibles.</td>
+                        <td colspan="5" class="text-center py-8 text-surface-400">No hay datos disponibles.</td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -390,8 +441,25 @@ type ResumenCentroPoblado = {
             [(visible)]="resumenDiaDialogVisible"
             [modal]="true"
             [style]="{ width: '720px', maxWidth: '96vw' }"
-            header="Encuestas por Encuestador y Día"
+            header="Resumen por Encuestador y Día"
         >
+            <div class="flex items-center gap-2 mb-4">
+                <p-button
+                    label="Encuestas"
+                    size="small"
+                    [severity]="activeResumenDiaTab() == 'encuestas' ? 'primary' : 'secondary'"
+                    [outlined]="activeResumenDiaTab() != 'encuestas'"
+                    (onClick)="activeResumenDiaTab.set('encuestas')"
+                ></p-button>
+                <p-button
+                    label="Observaciones"
+                    size="small"
+                    [severity]="activeResumenDiaTab() == 'observaciones' ? 'primary' : 'secondary'"
+                    [outlined]="activeResumenDiaTab() != 'observaciones'"
+                    (onClick)="activeResumenDiaTab.set('observaciones')"
+                ></p-button>
+            </div>
+
             <!-- Filtros de fecha -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                 <div>
@@ -424,7 +492,7 @@ type ResumenCentroPoblado = {
             <div class="flex items-center justify-between mb-3">
                 <div class="text-sm text-surface-500">
                     @if (filtroDiaDesde() || filtroDiaHasta()) {
-                        <span>Mostrando {{ resumenPorDia().length }} registro(s) filtrado(s)</span>
+                        <span>Mostrando {{ resumenPorDiaActivo().length }} registro(s) filtrado(s)</span>
                         <p-button
                             label="Limpiar"
                             icon="pi pi-times"
@@ -446,9 +514,9 @@ type ResumenCentroPoblado = {
                 ></p-button>
             </div>
             <p-table
-                [value]="resumenPorDia()"
+                [value]="resumenPorDiaActivo()"
                 [rows]="20"
-                [paginator]="resumenPorDia().length > 20"
+                [paginator]="resumenPorDiaActivo().length > 20"
                 [tableStyle]="{ 'min-width': '100%' }"
                 styleClass="p-datatable-sm"
                 [rowGroupMode]="'subheader'"
@@ -489,12 +557,30 @@ type ResumenCentroPoblado = {
             [(visible)]="resumenUbicacionDialogVisible"
             [modal]="true"
             [style]="{ width: '980px', maxWidth: '96vw' }"
-            header="Resumen de Encuestas por Ubicación"
+            header="Resumen por Ubicación"
         >
             <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2">
+                    <p-button
+                        label="Encuestas"
+                        size="small"
+                        [severity]="activeResumenUbicacionTab() == 'encuestas' ? 'primary' : 'secondary'"
+                        [outlined]="activeResumenUbicacionTab() != 'encuestas'"
+                        (onClick)="activeResumenUbicacionTab.set('encuestas')"
+                    ></p-button>
+                    <p-button
+                        label="Observaciones"
+                        size="small"
+                        [severity]="activeResumenUbicacionTab() == 'observaciones' ? 'primary' : 'secondary'"
+                        [outlined]="activeResumenUbicacionTab() != 'observaciones'"
+                        (onClick)="activeResumenUbicacionTab.set('observaciones')"
+                    ></p-button>
+                </div>
+
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div class="text-sm text-surface-500">
-                        Total de encuestas analizadas: <span class="font-semibold text-surface-700 dark:text-surface-100">{{ encuestas().length }}</span>
+                        Total de {{ activeResumenUbicacionTab() == 'encuestas' ? 'encuestas' : 'observaciones' }} analizadas:
+                        <span class="font-semibold text-surface-700 dark:text-surface-100">{{ totalRegistrosUbicacionActivo() }}</span>
                     </div>
                     <div class="flex justify-end">
                         <p-button
@@ -511,9 +597,9 @@ type ResumenCentroPoblado = {
                 <div class="rounded-xl border border-surface-200 dark:border-surface-700 p-4">
                     <div class="flex items-center justify-between mb-3 gap-3">
                         <h5 class="m-0 text-base font-semibold">Por Departamento</h5>
-                        <span class="text-sm text-surface-500">{{ resumenPorDepartamento().length }} registro(s)</span>
+                        <span class="text-sm text-surface-500">{{ resumenPorDepartamentoActivo().length }} registro(s)</span>
                     </div>
-                    <p-table [value]="resumenPorDepartamento()" [rows]="10" [paginator]="resumenPorDepartamento().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
+                    <p-table [value]="resumenPorDepartamentoActivo()" [rows]="10" [paginator]="resumenPorDepartamentoActivo().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
                         <ng-template #header>
                             <tr>
                                 <th pSortableColumn="departamento">Departamento <p-sortIcon field="departamento" /></th>
@@ -531,7 +617,7 @@ type ResumenCentroPoblado = {
                         <ng-template #footer>
                             <tr class="font-bold bg-surface-50 dark:bg-surface-800">
                                 <td>Total</td>
-                                <td style="text-align: center">{{ encuestas().length }}</td>
+                                <td style="text-align: center">{{ totalRegistrosUbicacionActivo() }}</td>
                             </tr>
                         </ng-template>
                         <ng-template #emptymessage>
@@ -545,9 +631,9 @@ type ResumenCentroPoblado = {
                 <div class="rounded-xl border border-surface-200 dark:border-surface-700 p-4">
                     <div class="flex items-center justify-between mb-3 gap-3">
                         <h5 class="m-0 text-base font-semibold">Por Municipio</h5>
-                        <span class="text-sm text-surface-500">{{ resumenPorMunicipio().length }} registro(s)</span>
+                        <span class="text-sm text-surface-500">{{ resumenPorMunicipioActivo().length }} registro(s)</span>
                     </div>
-                    <p-table [value]="resumenPorMunicipio()" [rows]="10" [paginator]="resumenPorMunicipio().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
+                    <p-table [value]="resumenPorMunicipioActivo()" [rows]="10" [paginator]="resumenPorMunicipioActivo().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
                         <ng-template #header>
                             <tr>
                                 <th pSortableColumn="departamento">Departamento <p-sortIcon field="departamento" /></th>
@@ -567,7 +653,7 @@ type ResumenCentroPoblado = {
                         <ng-template #footer>
                             <tr class="font-bold bg-surface-50 dark:bg-surface-800">
                                 <td colspan="2">Total</td>
-                                <td style="text-align: center">{{ encuestas().length }}</td>
+                                <td style="text-align: center">{{ totalRegistrosUbicacionActivo() }}</td>
                             </tr>
                         </ng-template>
                         <ng-template #emptymessage>
@@ -581,9 +667,9 @@ type ResumenCentroPoblado = {
                 <div class="rounded-xl border border-surface-200 dark:border-surface-700 p-4">
                     <div class="flex items-center justify-between mb-3 gap-3">
                         <h5 class="m-0 text-base font-semibold">Por Centro Poblado</h5>
-                        <span class="text-sm text-surface-500">{{ resumenPorCentroPoblado().length }} registro(s)</span>
+                        <span class="text-sm text-surface-500">{{ resumenPorCentroPobladoActivo().length }} registro(s)</span>
                     </div>
-                    <p-table [value]="resumenPorCentroPoblado()" [rows]="10" [paginator]="resumenPorCentroPoblado().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
+                    <p-table [value]="resumenPorCentroPobladoActivo()" [rows]="10" [paginator]="resumenPorCentroPobladoActivo().length > 10" [tableStyle]="{ 'min-width': '100%' }" styleClass="p-datatable-sm">
                         <ng-template #header>
                             <tr>
                                 <th pSortableColumn="departamento">Departamento <p-sortIcon field="departamento" /></th>
@@ -605,7 +691,7 @@ type ResumenCentroPoblado = {
                         <ng-template #footer>
                             <tr class="font-bold bg-surface-50 dark:bg-surface-800">
                                 <td colspan="3">Total</td>
-                                <td style="text-align: center">{{ encuestas().length }}</td>
+                                <td style="text-align: center">{{ totalRegistrosUbicacionActivo() }}</td>
                             </tr>
                         </ng-template>
                         <ng-template #emptymessage>
@@ -683,7 +769,9 @@ type ResumenCentroPoblado = {
 })
 export class Encuestas implements OnInit {
     encuestas = signal<Encuesta[]>([]);
+    observaciones = signal<Observacion[]>([]);
     formularios = signal<Formulario[]>([]);
+    usuarios = signal<Usuario[]>([]);
     hogares = signal<Hogar[]>([]);
     departamentos = signal<Departamento[]>([]);
     municipios = signal<Municipio[]>([]);
@@ -700,15 +788,21 @@ export class Encuestas implements OnInit {
     resumenDiaDialogVisible = false;
     resumenUbicacionDialogVisible = false;
     editHogarDialogVisible = false;
+    cambiarEncuestadorDialogVisible = false;
     detailLoading = signal(false);
     selectedEncuesta = signal<Encuesta | null>(null);
     respuestasDetalle = signal<RespuestaDetalle[]>([]);
     downloadingPdfId = signal<number | null>(null);
     editHogar: Hogar | null = null;
     savingHogar = false;
+    encuestaCambioEncuestador: Encuesta | null = null;
+    nuevoEncuestadorId: number | null = null;
+    savingCambiarEncuestador = false;
 
     filtroDiaDesde = signal<Date | null>(null);
     filtroDiaHasta = signal<Date | null>(null);
+    activeResumenDiaTab = signal<'encuestas' | 'observaciones'>('encuestas');
+    activeResumenUbicacionTab = signal<'encuestas' | 'observaciones'>('encuestas');
 
     private respuestasCache: Respuesta[] = [];
     private valoresOpcionCache: ValorOpcionRespuesta[] = [];
@@ -756,21 +850,58 @@ export class Encuestas implements OnInit {
         return mapa;
     });
 
+    encuestadoresLookup = computed(() => {
+        const mapa = new Map<number, string>();
+        for (const usuario of this.usuarios()) {
+            const usuarioId = this.normalizarId(usuario.id);
+            if (usuarioId == null || Number(usuario.rol_id) !== 2) continue;
+
+            const nombre = `${usuario.nombres ?? ''} ${usuario.apellidos ?? ''}`.trim();
+            mapa.set(usuarioId, nombre || `ID ${usuarioId}`);
+        }
+        return mapa;
+    });
+
     resumenPorEncuestador = computed<ResumenEncuestador[]>(() => {
         const mapa = new Map<number, ResumenEncuestador>();
+
         for (const e of this.encuestas()) {
             if (!e.encuestador_id) continue;
             if (!mapa.has(e.encuestador_id)) {
                 mapa.set(e.encuestador_id, {
                     encuestadorId: e.encuestador_id,
                     nombre: this.getEncuestadorLabel(e),
+                    encuestasTotal: 0,
+                    observacionesTotal: 0,
                     total: 0
                 });
             }
-            mapa.get(e.encuestador_id)!.total++;
+            const item = mapa.get(e.encuestador_id)!;
+            item.encuestasTotal++;
+            item.total = item.encuestasTotal + item.observacionesTotal;
         }
+
+        for (const o of this.observaciones()) {
+            if (!o.encuestador_id) continue;
+            if (!mapa.has(o.encuestador_id)) {
+                const nombre = `${o.encuestador?.nombres ?? ''} ${o.encuestador?.apellidos ?? ''}`.trim();
+                mapa.set(o.encuestador_id, {
+                    encuestadorId: o.encuestador_id,
+                    nombre: nombre || this.encuestadoresLookup().get(o.encuestador_id) || `ID ${o.encuestador_id}`,
+                    encuestasTotal: 0,
+                    observacionesTotal: 0,
+                    total: 0
+                });
+            }
+            const item = mapa.get(o.encuestador_id)!;
+            item.observacionesTotal++;
+            item.total = item.encuestasTotal + item.observacionesTotal;
+        }
+
         return Array.from(mapa.values()).sort((a, b) => b.total - a.total);
     });
+
+    totalActividadesPorEncuestador = computed(() => this.encuestas().length + this.observaciones().length);
 
     resumenPorDia = computed<ResumenDia[]>(() => {
         const desde = this.filtroDiaDesde();
@@ -803,6 +934,48 @@ export class Encuestas implements OnInit {
             return byNombre !== 0 ? byNombre : a.fecha.localeCompare(b.fecha);
         });
     });
+
+    resumenObservacionesPorDia = computed<ResumenDia[]>(() => {
+        const desde = this.filtroDiaDesde();
+        const hasta = this.filtroDiaHasta();
+        const mapa = new Map<string, ResumenDia>();
+
+        for (const o of this.observaciones()) {
+            if (!o.encuestador_id || !o.created_at) continue;
+
+            const fecha = o.created_at.substring(0, 10);
+            if (desde) {
+                const d = new Date(desde);
+                d.setHours(0, 0, 0, 0);
+                if (new Date(fecha) < d) continue;
+            }
+            if (hasta) {
+                const h = new Date(hasta);
+                h.setHours(23, 59, 59, 999);
+                if (new Date(fecha) > h) continue;
+            }
+
+            const clave = `${o.encuestador_id}__${fecha}`;
+            if (!mapa.has(clave)) {
+                const nombre = `${o.encuestador?.nombres ?? ''} ${o.encuestador?.apellidos ?? ''}`.trim();
+                mapa.set(clave, {
+                    encuestadorId: o.encuestador_id,
+                    nombre: nombre || this.encuestadoresLookup().get(o.encuestador_id) || `ID ${o.encuestador_id}`,
+                    fecha,
+                    total: 0
+                });
+            }
+
+            mapa.get(clave)!.total++;
+        }
+
+        return Array.from(mapa.values()).sort((a, b) => {
+            const byNombre = a.nombre.localeCompare(b.nombre);
+            return byNombre !== 0 ? byNombre : a.fecha.localeCompare(b.fecha);
+        });
+    });
+
+    resumenPorDiaActivo = computed(() => this.activeResumenDiaTab() == 'encuestas' ? this.resumenPorDia() : this.resumenObservacionesPorDia());
 
     resumenPorDepartamento = computed<ResumenDepartamento[]>(() => {
         const hogaresLookup = this.hogaresLookup();
@@ -898,6 +1071,99 @@ export class Encuestas implements OnInit {
         });
     });
 
+    resumenObservacionesPorDepartamento = computed<ResumenDepartamento[]>(() => {
+        const mapa = new Map<string, ResumenDepartamento>();
+
+        for (const observacion of this.observaciones()) {
+            const departamentoId = observacion.departamento_id ?? null;
+            const clave = departamentoId != null ? `departamento-${departamentoId}` : 'departamento-sin';
+
+            if (!mapa.has(clave)) {
+                mapa.set(clave, {
+                    departamentoId: departamentoId ?? clave,
+                    departamento: this.getDepartamentoNombreObservacion(observacion),
+                    total: 0
+                });
+            }
+
+            mapa.get(clave)!.total++;
+        }
+
+        return Array.from(mapa.values()).sort((a, b) => b.total - a.total || a.departamento.localeCompare(b.departamento));
+    });
+
+    resumenObservacionesPorMunicipio = computed<ResumenMunicipio[]>(() => {
+        const mapa = new Map<string, ResumenMunicipio>();
+
+        for (const observacion of this.observaciones()) {
+            const departamentoId = observacion.departamento_id ?? 'sin';
+            const municipioId = observacion.municipio_id ?? null;
+            const clave = municipioId != null ? `${departamentoId}-municipio-${municipioId}` : `${departamentoId}-municipio-sin`;
+
+            if (!mapa.has(clave)) {
+                mapa.set(clave, {
+                    municipioId: municipioId ?? clave,
+                    departamento: this.getDepartamentoNombreObservacion(observacion),
+                    municipio: this.getMunicipioNombreObservacion(observacion),
+                    total: 0
+                });
+            }
+
+            mapa.get(clave)!.total++;
+        }
+
+        return Array.from(mapa.values()).sort((a, b) => {
+            if (b.total !== a.total) {
+                return b.total - a.total;
+            }
+
+            const byDepartamento = a.departamento.localeCompare(b.departamento);
+            return byDepartamento !== 0 ? byDepartamento : a.municipio.localeCompare(b.municipio);
+        });
+    });
+
+    resumenObservacionesPorCentroPoblado = computed<ResumenCentroPoblado[]>(() => {
+        const mapa = new Map<string, ResumenCentroPoblado>();
+
+        for (const observacion of this.observaciones()) {
+            const departamentoId = observacion.departamento_id ?? 'sin';
+            const municipioId = observacion.municipio_id ?? 'sin';
+            const centroPobladoId = observacion.centro_poblado_id ?? null;
+            const clave = centroPobladoId != null ? `${departamentoId}-${municipioId}-centro-${centroPobladoId}` : `${departamentoId}-${municipioId}-centro-sin`;
+
+            if (!mapa.has(clave)) {
+                mapa.set(clave, {
+                    centroPobladoId: centroPobladoId ?? clave,
+                    departamento: this.getDepartamentoNombreObservacion(observacion),
+                    municipio: this.getMunicipioNombreObservacion(observacion),
+                    centroPoblado: this.getCentroPobladoNombreObservacion(observacion),
+                    total: 0
+                });
+            }
+
+            mapa.get(clave)!.total++;
+        }
+
+        return Array.from(mapa.values()).sort((a, b) => {
+            if (b.total !== a.total) {
+                return b.total - a.total;
+            }
+
+            const byDepartamento = a.departamento.localeCompare(b.departamento);
+            if (byDepartamento !== 0) {
+                return byDepartamento;
+            }
+
+            const byMunicipio = a.municipio.localeCompare(b.municipio);
+            return byMunicipio !== 0 ? byMunicipio : a.centroPoblado.localeCompare(b.centroPoblado);
+        });
+    });
+
+    resumenPorDepartamentoActivo = computed(() => this.activeResumenUbicacionTab() == 'encuestas' ? this.resumenPorDepartamento() : this.resumenObservacionesPorDepartamento());
+    resumenPorMunicipioActivo = computed(() => this.activeResumenUbicacionTab() == 'encuestas' ? this.resumenPorMunicipio() : this.resumenObservacionesPorMunicipio());
+    resumenPorCentroPobladoActivo = computed(() => this.activeResumenUbicacionTab() == 'encuestas' ? this.resumenPorCentroPoblado() : this.resumenObservacionesPorCentroPoblado());
+    totalRegistrosUbicacionActivo = computed(() => this.activeResumenUbicacionTab() == 'encuestas' ? this.encuestas().length : this.observaciones().length);
+
     encuestasFiltradas = computed(() => {
         const encuestadorId = this.filtroEncuestadorId();
         const hogarId = this.filtroHogarId();
@@ -930,22 +1196,6 @@ export class Encuestas implements OnInit {
         });
     });
 
-    encuestadorFilterOptions = computed(() => {
-        const seen = new Set<number>();
-        return this.encuestas()
-            .filter((e) => !!e.encuestador_id)
-            .filter((e) => {
-                if (seen.has(e.encuestador_id!)) return false;
-                seen.add(e.encuestador_id!);
-                return true;
-            })
-            .map((e) => ({
-                label: this.getEncuestadorLabel(e),
-                value: e.encuestador_id!
-            }))
-            .sort((a, b) => a.label.localeCompare(b.label));
-    });
-
     hogarFilterOptions = computed(() => {
         const seen = new Set<number>();
         return this.encuestas()
@@ -968,8 +1218,10 @@ export class Encuestas implements OnInit {
         private municipioService: MunicipioService,
         private centroPobladoService: CentroPobladoService,
         private hogarService: HogarService,
+        private observacionService: ObservacionService,
         private respuestaService: RespuestaService,
         private valorOpcionRespuestaService: ValorOpcionRespuestaService,
+        private usuarioService: UsuarioService,
         private confirmationService: ConfirmationService,
         private messageService: MessageService,
         private authService: AuthService,
@@ -984,13 +1236,17 @@ export class Encuestas implements OnInit {
         this.loading.set(true);
 
         try {
-            const [encuestas, formularios] = await Promise.all([
+            const [encuestas, observaciones, formularios, usuarios] = await Promise.all([
                 firstValueFrom(this.encuestaService.getEncuestas()),
-                firstValueFrom(this.formularioService.getFormularios())
+                firstValueFrom(this.observacionService.getAll()),
+                firstValueFrom(this.formularioService.getFormularios()),
+                firstValueFrom(this.usuarioService.getAll())
             ]);
 
             this.encuestas.set(encuestas);
+            this.observaciones.set(observaciones);
             this.formularios.set(formularios);
+            this.usuarios.set(usuarios);
             await this.loadUbicacionData();
             if (encuestas.length > 0) {
                 console.log('[Encuesta JSON ejemplo]', JSON.stringify(encuestas[0], null, 2));
@@ -1249,12 +1505,15 @@ export class Encuestas implements OnInit {
     getEncuestadorLabel(encuesta?: Encuesta | null): string {
         if (!encuesta) return '-';
         // La relación puede venir como 'encuestador' o 'usuario' según el backend de Laravel
-        const rel =  encuesta.usuario ?? null;
+        const rel = encuesta.encuestador ?? encuesta.usuario ?? null;
         if (rel) {
             const nombres = `${rel.nombres || rel.nombre || ''} ${rel.apellidos || rel.apellido || ''}`.trim();
             return nombres || `ID ${encuesta.encuestador_id}`;
         }
-        return encuesta.encuestador_id ? `ID ${encuesta.encuestador_id}` : '-';
+
+        const encuestadorId = this.normalizarId(encuesta.encuestador_id);
+        if (encuestadorId == null) return '-';
+        return this.encuestadoresLookup().get(encuestadorId) || `ID ${encuestadorId}`;
     }
 
     formatDateTime(raw: string | null | undefined): string {
@@ -1278,23 +1537,172 @@ export class Encuestas implements OnInit {
     }
 
     exportarExcelResumen(): void {
-        const total = this.encuestas().length;
+        const total = this.totalActividadesPorEncuestador();
         const filas = this.resumenPorEncuestador().map((r) => ({
             Encuestador: r.nombre.toUpperCase(),
+            Encuestas: r.encuestasTotal,
+            Observaciones: r.observacionesTotal,
             Total: r.total,
             Porcentaje: total ? +((r.total / total) * 100).toFixed(1) : 0
         }));
-        filas.push({ Encuestador: 'TOTAL', Total: total, Porcentaje: 100 });
+        filas.push({
+            Encuestador: 'TOTAL',
+            Encuestas: this.encuestas().length,
+            Observaciones: this.observaciones().length,
+            Total: total,
+            Porcentaje: 100
+        });
 
         const ws = XLSX.utils.json_to_sheet(filas);
-        ws['!cols'] = [{ wch: 40 }, { wch: 10 }, { wch: 12 }];
+        ws['!cols'] = [{ wch: 40 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, { wch: 12 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Resumen');
         XLSX.writeFile(wb, `resumen_encuestadores_${this.hoy()}.xlsx`);
     }
 
+    exportarExcelTablaEncuestas(): void {
+        const filasEncuestas = this.encuestasFiltradas().map((encuesta) => ({
+            Codigo: encuesta.id ?? '-',
+            Hogar: this.getHogarLabel(encuesta),
+            Departamento: this.getDepartamentoLabel(encuesta),
+            Municipio: this.getMunicipioLabel(encuesta),
+            CentroPoblado: this.getCentroPobladoLabel(encuesta),
+            Encuestador: this.getEncuestadorLabel(encuesta),
+            FechaHora: this.formatDateTime(encuesta.created_at),
+            Estado: this.getEstadoTexto(encuesta.estado_id)
+        }));
+
+        const filasObservaciones = this.observaciones().map((observacion) => ({
+            Codigo: observacion.id ?? '-',
+            Departamento: this.getDepartamentoNombreObservacion(observacion),
+            Municipio: this.getMunicipioNombreObservacion(observacion),
+            CentroPoblado: this.getCentroPobladoNombreObservacion(observacion),
+            Encuestador: this.getEncuestadorNombreObservacion(observacion),
+            Manzana: observacion.manzana || '-',
+            Predio: observacion.predio || '-',
+            Descripcion: observacion.descripcion || '-',
+            FechaHora: this.formatDateTime(observacion.created_at),
+            Estado: observacion.estado?.nombre || this.getEstadoTexto(observacion.estado_id)
+        }));
+
+        const wsEncuestas = XLSX.utils.json_to_sheet(filasEncuestas);
+        wsEncuestas['!cols'] = [{ wch: 10 }, { wch: 32 }, { wch: 22 }, { wch: 22 }, { wch: 24 }, { wch: 28 }, { wch: 22 }, { wch: 14 }];
+
+        const wsObservaciones = XLSX.utils.json_to_sheet(filasObservaciones);
+        wsObservaciones['!cols'] = [{ wch: 10 }, { wch: 22 }, { wch: 22 }, { wch: 24 }, { wch: 28 }, { wch: 14 }, { wch: 14 }, { wch: 45 }, { wch: 22 }, { wch: 14 }];
+
+        const totalEncuestas = this.encuestas().length;
+        const totalEncuestasFiltradas = this.encuestasFiltradas().length;
+        const totalObservaciones = this.observaciones().length;
+        const totalActividades = totalEncuestas + totalObservaciones;
+        const coberturaObservaciones = totalEncuestas > 0 ? ((totalObservaciones / totalEncuestas) * 100).toFixed(1) : '0.0';
+        const promedioObsPorEncuesta = totalEncuestas > 0 ? (totalObservaciones / totalEncuestas).toFixed(2) : '0.00';
+
+        const topActividad = this.resumenPorEncuestador().slice(0, 3);
+        const topDepartamentoEncuestas = this.resumenPorDepartamento()[0] || null;
+        const topDepartamentoObservaciones = this.resumenObservacionesPorDepartamento()[0] || null;
+        const topMunicipioEncuestas = this.resumenPorMunicipio()[0] || null;
+        const topMunicipioObservaciones = this.resumenObservacionesPorMunicipio()[0] || null;
+
+        const conteoEstadoEncuestas = new Map<string, number>();
+        for (const encuesta of this.encuestasFiltradas()) {
+            const estado = this.getEstadoTexto(encuesta.estado_id);
+            conteoEstadoEncuestas.set(estado, (conteoEstadoEncuestas.get(estado) || 0) + 1);
+        }
+
+        const conteoEstadoObservaciones = new Map<string, number>();
+        for (const observacion of this.observaciones()) {
+            const estado = observacion.estado?.nombre || this.getEstadoTexto(observacion.estado_id);
+            conteoEstadoObservaciones.set(estado, (conteoEstadoObservaciones.get(estado) || 0) + 1);
+        }
+
+        const filasEstadisticas: Array<{ Seccion: string; Indicador: string; Valor: string | number }> = [
+            { Seccion: 'General', Indicador: 'Total Encuestas', Valor: totalEncuestas },
+            { Seccion: 'General', Indicador: 'Encuestas Filtradas (tabla)', Valor: totalEncuestasFiltradas },
+            { Seccion: 'General', Indicador: 'Total Observaciones', Valor: totalObservaciones },
+            { Seccion: 'General', Indicador: 'Total Actividades (E+O)', Valor: totalActividades },
+            { Seccion: 'General', Indicador: 'Cobertura Observaciones vs Encuestas', Valor: `${coberturaObservaciones}%` },
+            { Seccion: 'General', Indicador: 'Promedio Observaciones por Encuesta', Valor: promedioObsPorEncuesta },
+            {
+                Seccion: 'Top Ubicacion',
+                Indicador: 'Departamento #1 (Encuestas)',
+                Valor: topDepartamentoEncuestas ? `${topDepartamentoEncuestas.departamento} (${topDepartamentoEncuestas.total})` : '-'
+            },
+            {
+                Seccion: 'Top Ubicacion',
+                Indicador: 'Departamento #1 (Observaciones)',
+                Valor: topDepartamentoObservaciones ? `${topDepartamentoObservaciones.departamento} (${topDepartamentoObservaciones.total})` : '-'
+            },
+            {
+                Seccion: 'Top Ubicacion',
+                Indicador: 'Municipio #1 (Encuestas)',
+                Valor: topMunicipioEncuestas ? `${topMunicipioEncuestas.municipio} (${topMunicipioEncuestas.total})` : '-'
+            },
+            {
+                Seccion: 'Top Ubicacion',
+                Indicador: 'Municipio #1 (Observaciones)',
+                Valor: topMunicipioObservaciones ? `${topMunicipioObservaciones.municipio} (${topMunicipioObservaciones.total})` : '-'
+            }
+        ];
+
+        for (let i = 0; i < topActividad.length; i++) {
+            const item = topActividad[i];
+            filasEstadisticas.push({
+                Seccion: 'Top Encuestadores',
+                Indicador: `Top ${i + 1} - ${item.nombre}`,
+                Valor: `Encuestas: ${item.encuestasTotal}, Observaciones: ${item.observacionesTotal}, Total: ${item.total}`
+            });
+        }
+
+        for (const [estado, total] of conteoEstadoEncuestas.entries()) {
+            filasEstadisticas.push({
+                Seccion: 'Estado Encuestas',
+                Indicador: estado,
+                Valor: total
+            });
+        }
+
+        for (const [estado, total] of conteoEstadoObservaciones.entries()) {
+            filasEstadisticas.push({
+                Seccion: 'Estado Observaciones',
+                Indicador: estado,
+                Valor: total
+            });
+        }
+
+        const wsEstadisticas = XLSX.utils.json_to_sheet(filasEstadisticas);
+        wsEstadisticas['!cols'] = [{ wch: 24 }, { wch: 50 }, { wch: 40 }];
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, wsEncuestas, 'Encuestas');
+        XLSX.utils.book_append_sheet(wb, wsObservaciones, 'Observaciones');
+        XLSX.utils.book_append_sheet(wb, wsEstadisticas, 'Estadisticas');
+        XLSX.writeFile(wb, `encuestas_tabla_${this.hoy()}.xlsx`);
+    }
+
+    private getEstadoTexto(estadoId?: number | null): string {
+        if (estadoId == 1) return 'ACTIVO';
+        if (estadoId == 2) return 'INACTIVO';
+        if (estadoId == 3) return 'PENDIENTE';
+        return 'SIN ESTADO';
+    }
+
+    private getEncuestadorNombreObservacion(observacion?: Observacion | null): string {
+        if (!observacion) return '-';
+
+        const rel = observacion.encuestador;
+        if (rel) {
+            const nombre = `${rel.nombres ?? ''} ${rel.apellidos ?? ''}`.trim();
+            if (nombre) return nombre;
+        }
+
+        const encuestadorId = this.normalizarId(observacion.encuestador_id);
+        if (encuestadorId == null) return '-';
+        return this.encuestadoresLookup().get(encuestadorId) || `ID ${encuestadorId}`;
+    }
+
     exportarExcelResumenDia(): void {
-        const filas = this.resumenPorDia().map((r) => ({
+        const filas = this.resumenPorDiaActivo().map((r) => ({
             Encuestador: r.nombre.toUpperCase(),
             Fecha: r.fecha,
             Total: r.total
@@ -1304,22 +1712,23 @@ export class Encuestas implements OnInit {
         ws['!cols'] = [{ wch: 40 }, { wch: 12 }, { wch: 10 }];
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Por Día');
-        XLSX.writeFile(wb, `resumen_por_dia_${this.hoy()}.xlsx`);
+        const fuente = this.activeResumenDiaTab() == 'encuestas' ? 'encuestas' : 'observaciones';
+        XLSX.writeFile(wb, `resumen_por_dia_${fuente}_${this.hoy()}.xlsx`);
     }
 
     exportarExcelResumenUbicacion(): void {
-        const departamentos = this.resumenPorDepartamento().map((r) => ({
+        const departamentos = this.resumenPorDepartamentoActivo().map((r) => ({
             Departamento: r.departamento.toUpperCase(),
             Total: r.total
         }));
 
-        const municipios = this.resumenPorMunicipio().map((r) => ({
+        const municipios = this.resumenPorMunicipioActivo().map((r) => ({
             Departamento: r.departamento.toUpperCase(),
             Municipio: r.municipio.toUpperCase(),
             Total: r.total
         }));
 
-        const centros = this.resumenPorCentroPoblado().map((r) => ({
+        const centros = this.resumenPorCentroPobladoActivo().map((r) => ({
             Departamento: r.departamento.toUpperCase(),
             Municipio: r.municipio.toUpperCase(),
             'Centro Poblado': r.centroPoblado.toUpperCase(),
@@ -1340,7 +1749,8 @@ export class Encuestas implements OnInit {
         wsCentros['!cols'] = [{ wch: 28 }, { wch: 28 }, { wch: 32 }, { wch: 10 }];
         XLSX.utils.book_append_sheet(wb, wsCentros, 'Centros');
 
-        XLSX.writeFile(wb, `resumen_ubicacion_${this.hoy()}.xlsx`);
+        const fuente = this.activeResumenUbicacionTab() == 'encuestas' ? 'encuestas' : 'observaciones';
+        XLSX.writeFile(wb, `resumen_ubicacion_${fuente}_${this.hoy()}.xlsx`);
     }
 
     private hoy(): string {
@@ -1412,6 +1822,48 @@ export class Encuestas implements OnInit {
         return 'Sin centro poblado';
     }
 
+    private getDepartamentoNombreObservacion(observacion?: Observacion | null): string {
+        const nombre = observacion?.departamento?.nombre?.trim();
+        if (nombre) {
+            return nombre;
+        }
+
+        const departamentoId = this.normalizarId(observacion?.departamento_id);
+        if (departamentoId != null) {
+            return this.departamentosLookup().get(departamentoId) ?? `Departamento ID ${departamentoId}`;
+        }
+
+        return 'Sin departamento';
+    }
+
+    private getMunicipioNombreObservacion(observacion?: Observacion | null): string {
+        const nombre = observacion?.municipio?.nombre?.trim();
+        if (nombre) {
+            return nombre;
+        }
+
+        const municipioId = this.normalizarId(observacion?.municipio_id);
+        if (municipioId != null) {
+            return this.municipiosLookup().get(municipioId) ?? `Municipio ID ${municipioId}`;
+        }
+
+        return 'Sin municipio';
+    }
+
+    private getCentroPobladoNombreObservacion(observacion?: Observacion | null): string {
+        const nombre = observacion?.centro_poblado?.nombre?.trim();
+        if (nombre) {
+            return nombre;
+        }
+
+        const centroId = this.normalizarId(observacion?.centro_poblado_id);
+        if (centroId != null) {
+            return this.centrosPobladosLookup().get(centroId) ?? `Centro ID ${centroId}`;
+        }
+
+        return 'Sin centro poblado';
+    }
+
     openEditHogar(encuesta: Encuesta): void {
         if (!encuesta.hogar_id) {
             this.messageService.add({ severity: 'warn', summary: 'Sin hogar', detail: 'Esta encuesta no tiene hogar asociado.', life: 3000 });
@@ -1425,6 +1877,49 @@ export class Encuestas implements OnInit {
             },
             error: () => {
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el hogar.', life: 4000 });
+            }
+        });
+    }
+
+    openCambiarEncuestador(encuesta: Encuesta): void {
+        if (!encuesta?.id) {
+            this.messageService.add({ severity: 'warn', summary: 'Sin encuesta', detail: 'No se encontró la encuesta para cambiar encuestador.', life: 3000 });
+            return;
+        }
+
+        this.encuestaCambioEncuestador = encuesta;
+        this.nuevoEncuestadorId = this.normalizarId(encuesta.encuestador_id);
+        this.savingCambiarEncuestador = false;
+        this.cambiarEncuestadorDialogVisible = true;
+    }
+
+    closeCambiarEncuestador(): void {
+        this.cambiarEncuestadorDialogVisible = false;
+        this.encuestaCambioEncuestador = null;
+        this.nuevoEncuestadorId = null;
+        this.savingCambiarEncuestador = false;
+    }
+
+    saveCambiarEncuestador(): void {
+        const encuestaId = this.normalizarId(this.encuestaCambioEncuestador?.id);
+        const encuestadorId = this.normalizarId(this.nuevoEncuestadorId);
+
+        if (!encuestaId || !encuestadorId) {
+            this.messageService.add({ severity: 'warn', summary: 'Dato requerido', detail: 'Selecciona un encuestador válido.', life: 3500 });
+            return;
+        }
+
+        this.savingCambiarEncuestador = true;
+        this.encuestaService.updateEncuesta(encuestaId, { encuestador_id: encuestadorId }).subscribe({
+            next: () => {
+                this.messageService.add({ severity: 'success', summary: 'Actualizado', detail: 'Encuestador cambiado correctamente.', life: 3000 });
+                this.closeCambiarEncuestador();
+                void this.loadInitialData();
+            },
+            error: (err) => {
+                const msg = err?.error?.message || 'No se pudo cambiar el encuestador.';
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: msg, life: 4500 });
+                this.savingCambiarEncuestador = false;
             }
         });
     }

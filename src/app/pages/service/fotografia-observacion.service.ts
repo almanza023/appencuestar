@@ -31,11 +31,39 @@ export class FotografiaObservacionService {
         return this.apiService.post<FotografiaObservacion>(this.endpoint, fotografia);
     }
 
+    createWithFormData(payload: Record<string, unknown>, imagen?: File): Observable<FotografiaObservacion> {
+        const formData = this.buildFormData(payload, imagen);
+        return this.apiService.postFormData<FotografiaObservacion>(this.endpoint, formData);
+    }
+
     update(id: number, fotografia: Partial<FotografiaObservacion>): Observable<FotografiaObservacion> {
         return this.apiService.put<FotografiaObservacion>(this.endpoint, id, fotografia);
     }
 
+    updateWithFormData(id: number, payload: Record<string, unknown>, imagen?: File): Observable<FotografiaObservacion> {
+        const formData = this.buildFormData(payload, imagen);
+        return this.apiService.putFormData<FotografiaObservacion>(this.endpoint, id, formData);
+    }
+
     delete(id: number): Observable<void> {
         return this.apiService.delete<void>(this.endpoint, id);
+    }
+
+    private buildFormData(payload: Record<string, unknown>, imagen?: File): FormData {
+        const formData = new FormData();
+
+        Object.entries(payload).forEach(([key, value]) => {
+            if (value == undefined || value == null) {
+                return;
+            }
+
+            formData.append(key, String(value));
+        });
+
+        if (imagen) {
+            formData.append('imagen', imagen);
+        }
+
+        return formData;
     }
 }
