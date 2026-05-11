@@ -405,8 +405,29 @@ export class Usuarios implements OnInit {
                 firstValueFrom(this.proyectoUsuarioService.getAll())
             ]);
 
+            let rolesCatalogo = roles;
+            const hasRolAnalista = rolesCatalogo.some((rol) => rol.id == 3 || (rol.nombre || '').trim().toLowerCase() == 'analista');
+            if (!hasRolAnalista) {
+                try {
+                    await firstValueFrom(
+                        this.rolService.create({
+                            nombre: 'Analista',
+                            descripcion: 'Acceso a dashboard, encuestas, hogares y observaciones',
+                            estado_id: 1
+                        })
+                    );
+                    rolesCatalogo = await firstValueFrom(this.rolService.getAll());
+                } catch {
+                    // Si no hay permisos para crear roles, se mantiene el catálogo actual.
+                }
+            }
+
+            if (!rolesCatalogo.some((rol) => rol.id == 3)) {
+                rolesCatalogo = [...rolesCatalogo, { id: 3, nombre: 'Analista', descripcion: 'Rol analista', estado_id: 1 }];
+            }
+
             this.usuarios.set(usuarios);
-            this.roles.set(roles);
+            this.roles.set(rolesCatalogo);
             this.estados.set(estados);
             this.proyectos.set(proyectos);
             this.relaciones.set(relaciones);
@@ -651,6 +672,7 @@ export class Usuarios implements OnInit {
 
     getRolNombre(rolId?: number | null): string {
         if (!rolId) return 'Sin rol';
+        if (rolId == 3) return 'Analista';
         return this.roles().find((rol) => rol.id == rolId)?.nombre ?? `Rol #${rolId}`;
     }
 

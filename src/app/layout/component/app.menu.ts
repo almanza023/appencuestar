@@ -25,7 +25,27 @@ export class AppMenu implements OnInit {
     constructor(private authService: AuthService) {}
 
     ngOnInit() {
+        const admin = this.authService.isAdmin();
+        const analista = this.authService.isAnalista();
         const restringido = this.authService.isRolRestringido();
+
+        if (analista) {
+            this.model = [
+                {
+                    label: 'Home',
+                    items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+                },
+                {
+                    label: 'Trabajo de Campo',
+                    items: [
+                        { label: 'Encuestas', icon: 'pi pi-fw pi-list-check', routerLink: ['/pages/encuestas'] },
+                        { label: 'Hogares', icon: 'pi pi-fw pi-home', routerLink: ['/pages/hogares'] },
+                        { label: 'Observaciones', icon: 'pi pi-fw pi-comments', routerLink: ['/pages/observaciones'] }
+                    ]
+                }
+            ];
+            return;
+        }
 
         if (restringido) {
             // Roles restringidos: solo acceden a sus encuestas y su perfil
@@ -51,6 +71,16 @@ export class AppMenu implements OnInit {
         }
 
         // Acceso completo para roles administrativos
+        if (!admin) {
+            this.model = [
+                {
+                    label: 'Home',
+                    items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }]
+                }
+            ];
+            return;
+        }
+
         this.model = [
             {
                 label: 'Home',

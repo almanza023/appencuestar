@@ -45,7 +45,12 @@ export class RoleSelectComponent implements ControlValueAccessor, OnInit {
     ngOnInit() {
         this.rolService.getAll().subscribe({
             next: (data) => {
-                this.opciones.set(data.map((rol) => ({ label: rol.nombre, value: rol.id! })));
+                const opciones = data.map((rol) => ({ label: rol.nombre, value: rol.id! }));
+                const hasAnalista = opciones.some((rol) => rol.value == 3);
+                if (!hasAnalista) {
+                    opciones.push({ label: 'Analista', value: 3 });
+                }
+                this.opciones.set(opciones);
             }
         });
     }

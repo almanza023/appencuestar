@@ -146,6 +146,7 @@ import * as XLSX from 'xlsx';
                     <th pSortableColumn="manzana" style="min-width: 9rem">Manzana <p-sortIcon field="manzana" /></th>
                     <th pSortableColumn="predio" style="min-width: 9rem">Predio <p-sortIcon field="predio" /></th>
                     <th pSortableColumn="descripcion" style="min-width: 22rem">Descripción <p-sortIcon field="descripcion" /></th>
+                    <th pSortableColumn="created_at" style="min-width: 13rem">Fecha Sincronización <p-sortIcon field="created_at" /></th>
                     <th pSortableColumn="estado_id" style="min-width: 8rem">Estado <p-sortIcon field="estado_id" /></th>
                     <th style="min-width: 9rem"></th>
                 </tr>
@@ -159,6 +160,7 @@ import * as XLSX from 'xlsx';
                     <th><p-columnFilter type="text" field="centro_poblado.nombre" placeholder="Centro Poblado" /></th>
                     <th><p-columnFilter type="text" field="manzana" placeholder="Manzana" /></th>
                     <th><p-columnFilter type="text" field="predio" placeholder="Predio" /></th>
+                    <th></th>
 
                     <th><p-columnFilter type="numeric" field="estado_id" placeholder="Estado" /></th>
                     <th></th>
@@ -177,6 +179,7 @@ import * as XLSX from 'xlsx';
                     <td class="uppercase">{{ o.manzana || '-' }}</td>
                     <td class="uppercase">{{ o.predio || '-' }}</td>
                     <td>{{ o.descripcion }}</td>
+                    <td>{{ formatFechaSincronizacion(o.created_at) }}</td>
                     <td>{{ o.estado?.nombre || '' }}</td>
                     <td>
                         <p-button icon="pi pi-images" class="mr-2" severity="help" [rounded]="true" [outlined]="true" (click)="openFotografiasTablaDialog(o)" pTooltip="Ver fotografías" tooltipPosition="top" />
@@ -824,6 +827,7 @@ export class Observaciones implements OnInit {
             Manzana: o.manzana || '-',
             Predio: o.predio || '-',
             Descripcion: o.descripcion || '-',
+            FechaSincronizacion: this.formatFechaSincronizacion(o.created_at),
             Estado: o.estado?.nombre || this.getEstadoNombre(o.estado_id)
         }));
 
@@ -836,7 +840,7 @@ export class Observaciones implements OnInit {
         const workbook = XLSX.utils.book_new();
 
         const observacionesSheet = XLSX.utils.json_to_sheet(observacionesData);
-        observacionesSheet['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 22 }, { wch: 22 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 16 }];
+        observacionesSheet['!cols'] = [{ wch: 10 }, { wch: 30 }, { wch: 22 }, { wch: 22 }, { wch: 24 }, { wch: 12 }, { wch: 12 }, { wch: 40 }, { wch: 20 }, { wch: 16 }];
         XLSX.utils.book_append_sheet(workbook, observacionesSheet, 'Observaciones');
 
         const fotografiasSheet = XLSX.utils.json_to_sheet(fotografiasData);
@@ -851,6 +855,22 @@ export class Observaciones implements OnInit {
         if (estadoId == 2) return 'INACTIVO';
         if (estadoId == 3) return 'PENDIENTE';
         return 'SIN ESTADO';
+    }
+
+    formatFechaSincronizacion(raw?: string | null): string {
+        if (!raw) return '-';
+
+        const parsed = new Date(raw);
+        if (Number.isNaN(parsed.getTime())) return '-';
+
+        const day = `${parsed.getDate()}`.padStart(2, '0');
+        const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+        const year = parsed.getFullYear();
+        const hours = `${parsed.getHours()}`.padStart(2, '0');
+        const minutes = `${parsed.getMinutes()}`.padStart(2, '0');
+        const seconds = `${parsed.getSeconds()}`.padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     }
 
     toUpper(value?: string | null): string {

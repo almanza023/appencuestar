@@ -20,11 +20,13 @@ export const authChildGuard: CanActivateChildFn = () => validateSession();
 
 /** Guard que bloquea el acceso a rutas administrativas para roles restringidos.
  *  Si el usuario tiene un rol restringido se redirige a /pages/encuestas. */
-export const roleGuard: CanActivateFn = () => {
+export const roleGuard: CanActivateFn = (_route, state) => {
     const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (!authService.isRolRestringido()) {
+    const currentUrl = state.url || '/';
+
+    if (authService.canAccessByRole(currentUrl)) {
         return true;
     }
 

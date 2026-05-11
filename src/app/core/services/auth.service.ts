@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 /** IDs de roles con acceso restringido (solo pueden ver sus propias encuestas).
  *  Ajusta este arreglo según los IDs reales de tu tabla de roles. */
 export const ROLES_RESTRINGIDOS: number[] = [2];
+export const ROL_ADMIN_ID = 1;
+export const ROL_ANALISTA_ID = 3;
 
 export interface AuthUser {
     [key: string]: unknown;
@@ -97,6 +99,33 @@ export class AuthService {
     isRolRestringido(): boolean {
         const rolId = this.getCurrentUserRolId();
         return rolId !== null && ROLES_RESTRINGIDOS.includes(rolId);
+    }
+
+    isAdmin(): boolean {
+        return this.getCurrentUserRolId() == ROL_ADMIN_ID;
+    }
+
+    isAnalista(): boolean {
+        return this.getCurrentUserRolId() == ROL_ANALISTA_ID;
+    }
+
+    canAccessByRole(path: string): boolean {
+        if (this.isAdmin()) {
+            return true;
+        }
+
+        const normalizedPath = (path || '/').split('?')[0].split('#')[0];
+
+        if (this.isAnalista()) {
+            return (
+                normalizedPath == '/' ||
+                normalizedPath.startsWith('/pages/encuestas') ||
+                normalizedPath.startsWith('/pages/hogares') ||
+                normalizedPath.startsWith('/pages/observaciones')
+            );
+        }
+
+        return false;
     }
 
     syncCurrentUser(): Observable<AuthUser> {
